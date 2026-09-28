@@ -103,6 +103,7 @@
 
 **작업**
 - [ ] `domain/sim/launch_rules.dart` — 드래그 벡터 → 각도(범위 제한)·힘 p(0~1.1), 발사 속도 ∝ p (고무줄 Lv 반영)
+- [ ] 참고: `모찌 런처 2.5D.html` 의 `needleSpeed`·`drawGauge`·`release` (손맛 기준)
 - [ ] `domain/sim/accuracy_gauge.dart` — 바늘 왕복(시간 함수, 결정론), 속도 `0.45 + 1.35p` (p≤1) / `1.8 × (1 + 9(p−1))` (p>1)
 - [ ] 판정: PERFECT(가운데 10%, ×1.15) / GREAT(정확도 ≥70%, ×1.03~1.13) / GOOD(40~70%, ×0.95~1.03) / 아쉬워요(<40%, ×0.80~0.95), 구간 내 선형 보간
 - [ ] `game/input/pull_input.dart` — 터치 → LaunchInput 변환 (시작점 기준 반대 방향 발사)
@@ -157,6 +158,7 @@
 
 ## P7 2.5D 코드 렌더링 ⬜ (GDD §1 아트 스타일, §3 2.5D 아트 디렉션, §10 캐릭터 렌더링)
 **목표**: 외부 에셋 없이 “손에 쥐고 싶은 말랑한 장난감” 질감의 모찌·오브젝트·배경을 코드로 그린다. 게임플레이는 2D 그대로.
+**시각 기준**: `모찌 런처 2.5D.html` (drawMochi·lit·radial·softSpot·drawFace·spring) — 이 샘플 이상의 품질을 Flame 으로 재현
 - [ ] `game/render/parts/` — 파츠 레이어(몸통, 볼, 귀, 발, 눈, 입), 입력값 `stretch`·`stretchAngle`·`speed`·`squash`·`cheek`·`boost`·`expr`·`lightColor`
 - [ ] 셰이딩 7단계: 접지 그림자 → 베이스 컬러 → 면 그라데이션(좌상단 45° 광원) → 앰비언트 오클루전 → 림라이트 → 스페큘러 → 털 질감(저사양 끔)
 - [ ] `shaders/*.frag` FragmentShader (그라데이션·림라이트·스페큘러), 셰이더 미지원/저사양 시 Canvas 대체 경로
@@ -174,7 +176,7 @@
 ## P8 온보딩·표정·사운드 합성 ⬜ (GDD §3 표정·사운드·제작 원칙, §9)
 - [ ] 온보딩 스크립트(GDD §9): 1판 당기기만+트램폴린 자동배치 / 2판 부스터+첫 업그레이드 무료 / 3판 황금씨앗 확정+광고 2배 제안 / 5판 퍼펙트 릴리즈 / 공원 도달 시 부풀리기·급강하 해금
 - [ ] 표정 9종 상태 머신(domain 에서 표정 상태 결정 → game/render `expr` 입력)
-- [ ] 효과음 코드 합성(고무 늘어남 음높이, 발사 휘익+찍, 씨앗 뽁 콤보 음계 상승, 착지 뿅) — 합성·재생 방식 ADR, BGM 은 CC0 만
+- [ ] 효과음 코드 합성(참고: 샘플 HTML 의 squeakStart/Set/Stop·boostSound·tone·noise) (고무 늘어남 음높이, 발사 휘익+찍, 씨앗 뽁 콤보 음계 상승, 착지 뿅) — 합성·재생 방식 ADR, BGM 은 CC0 만
 - [ ] 폰트 OFL(Jua / Gowun Dodum) 적용, 문자열 `ui/strings.dart` 정리
 **DoD**: 온보딩 단계 전이 테스트(1~5판 시나리오) · 표정 전이 테스트 · 합성음 생성 결정론 테스트
 

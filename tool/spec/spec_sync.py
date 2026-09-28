@@ -26,6 +26,8 @@ SNAP_DIR = ROOT / "docs" / "spec_snapshot"
 SNAP_GDD = SNAP_DIR / "gdd.md"
 SNAP_SHEET = SNAP_DIR / "sheet_values.json"
 SNAP_META = SNAP_DIR / "meta.json"
+# 내용 비교 없이 변경 여부만 추적하는 참고 자료 (해시)
+REFERENCES = [ROOT / "모찌 런처 2.5D.html"]
 FLOAT_TOLERANCE = 1e-9  # Excel 재계산의 마지막 자리 차이는 변경으로 보지 않는다
 
 
@@ -79,6 +81,17 @@ def changed_sections(old: str, new: str) -> list:
     return sections
 
 
+def _sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else "(없음)"
+
+
+def reference_changes() -> list:
+    saved = {}
+    if SNAP_META.exists():
+        saved = json.loads(SNAP_META.read_text(encoding="utf-8")).get("references", {})
+    return [p.name for p in REFERENCES if saved.get(p.name) != _sha(p)]
+
+
 def status():
     if not SNAP_GDD.exists():
         return None
@@ -89,6 +102,7 @@ def status():
         "gdd_changed": gdd_old != gdd_new,
         "sections": changed_sections(gdd_old, gdd_new) if gdd_old != gdd_new else [],
         "sheet": sheet_changes(sheet_old, sheet_new),
+        "refs": reference_changes(),
         "gdd_old": gdd_old,
         "gdd_new": gdd_new,
     }
@@ -105,6 +119,7 @@ def mark():
         json.dumps({
             "synced_at": date.today().isoformat(),
             "gdd_sha256": hashlib.sha256(read_gdd().encode("utf-8")).hexdigest(),
+            "references": {p.name: _sha(p) for p in REFERENCES},
         }, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8", newline="\n",
     )
@@ -120,7 +135,7 @@ def main() -> int:
     if st is None:
         print("스냅샷 없음 → python tool/spec/spec_sync.py --mark 로 시작")
         return 0
-    changed = st["gdd_changed"] or st["sheet"]
+    changed = st["gdd_changed"] or st["sheet"] or st["refs"]
     if "--hook" in args:
         if changed:
             parts = []
@@ -128,6 +143,8 @@ def main() -> int:
                 parts.append("GDD 변경 절: " + ", ".join(st["sections"][:12]))
             if st["sheet"]:
                 parts.append(f"밸런스 시트 변경 셀 {len(st['sheet'])}개")
+            if st["refs"]:
+                parts.append("참고 자료 변경: " + ", ".join(st["refs"]))
             print(
                 "[기준 문서 변경 감지] " + " / ".join(parts)
                 + ". 작업 전에 `python tool/spec/spec_sync.py --diff` 로 내용을 확인하고 "
@@ -141,6 +158,8 @@ def main() -> int:
         print("GDD 변경 절:", ", ".join(st["sections"]))
     if st["sheet"]:
         print(f"밸런스 시트 변경 셀 {len(st['sheet'])}개")
+    if st["refs"]:
+        print("참고 자료 변경:", ", ".join(st["refs"]))
     if "--diff" in args:
         if st["gdd_changed"]:
             diff = difflib.unified_diff(

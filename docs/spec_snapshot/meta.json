@@ -1,4 +1,7 @@
 {
   "synced_at": "2026-09-28",
-  "gdd_sha256": "09cb47cd987984ba2d98b6a21b2afb1432a6e073aefe34368fa4435d1abb5cb3"
+  "gdd_sha256": "09cb47cd987984ba2d98b6a21b2afb1432a6e073aefe34368fa4435d1abb5cb3",
+  "references": {
+    "모찌 런처 2.5D.html": "929ff3aecbdcecd1c1fadb5e1d46f9025596a5c147d8263616c6f86e81d0a452"
+  }
 }
