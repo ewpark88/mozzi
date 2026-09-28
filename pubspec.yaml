@@ -1,0 +1,31 @@
+name: mozzi
+description: "모찌 런처 — 말랑한 햄스터를 당겨 달까지 날리는 하이브리드 캐주얼 게임"
+publish_to: 'none'
+
+# 버전 규칙: docs/BUILD_RELEASE.md §3 참조.
+# MAJOR.MINOR.PATCH+BUILD — MVP 기간은 0.x, BUILD는 스토어 업로드마다 +1.
+version: 0.0.1+1
+
+environment:
+  sdk: ^3.12.0
+
+# 의존성 추가 규칙: docs/CODING_RULES.md §9 참조 (추가 전 DECISIONS.md에 사유 기록).
+dependencies:
+  flame: ^1.38.2
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  hive_ce: ^2.20.1
+  hive_ce_flutter: ^2.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^10.3.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/config/

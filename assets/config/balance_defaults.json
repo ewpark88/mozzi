@@ -1,0 +1,71 @@
+{
+  "_source": "모찌런처_밸런스시트.xlsx",
+  "upg_launch": {
+    "base": 10,
+    "growth": 1.15,
+    "effect": 2.2
+  },
+  "upg_aero": {
+    "base": 15,
+    "growth": 1.17,
+    "effect": 0.06
+  },
+  "upg_boost": {
+    "base": 25,
+    "growth": 1.2,
+    "effect": 1.3
+  },
+  "upg_bounce": {
+    "base": 40,
+    "growth": 1.25,
+    "effect": 0.04
+  },
+  "upg_coin": {
+    "base": 60,
+    "growth": 1.3,
+    "effect": 0.1
+  },
+  "phys_v0": 15,
+  "phys_g": 9.8,
+  "phys_boost_k": 20,
+  "coin_per_m": 0.5,
+  "run_sec": 40,
+  "zones": [
+    {
+      "id": 1,
+      "name": "뒷마당",
+      "start_m": 0,
+      "target_runs_no_ad": 1
+    },
+    {
+      "id": 2,
+      "name": "공원",
+      "start_m": 500,
+      "target_runs_no_ad": 13
+    },
+    {
+      "id": 3,
+      "name": "도시 옥상",
+      "start_m": 2000,
+      "target_runs_no_ad": 20
+    },
+    {
+      "id": 4,
+      "name": "구름 위",
+      "start_m": 6000,
+      "target_runs_no_ad": 29
+    },
+    {
+      "id": 5,
+      "name": "우주",
+      "start_m": 15000,
+      "target_runs_no_ad": 45
+    },
+    {
+      "id": 6,
+      "name": "달",
+      "start_m": 40000,
+      "target_runs_no_ad": 113
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "FLAVOR": "prod",
+  "USE_FAKE_SERVICES": true
+}
