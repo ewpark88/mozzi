@@ -12,4 +12,4 @@ Phase $ARGUMENTS 의 완료를 검증한다.
    - `docs/DEV_PLAN.md` 의 해당 작업 체크박스와 상태를 갱신한다.
    - `docs/PROGRESS.md` 에 날짜·완료 항목·남은 이슈·결정사항을 추가한다.
    - `CLAUDE.md` 의 "현재 Phase" 줄을 다음 Phase 로 바꾼다.
-5. 커밋은 사용자가 요청할 때만 한다 (Conventional Commits, docs/BUILD_RELEASE.md §2).
+5. 커밋(Conventional Commits) → Phase 브랜치 push → main fast-forward 머지 → push → CI 결과 확인 (docs/BUILD_RELEASE.md §1).

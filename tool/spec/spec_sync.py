@@ -82,7 +82,10 @@ def changed_sections(old: str, new: str) -> list:
 
 
 def _sha(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else "(없음)"
+    """줄바꿈(CRLF/LF)만 다른 경우는 같은 내용으로 본다 (git 체크아웃 변환)."""
+    if not path.exists():
+        return "(없음)"
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def reference_changes() -> list:
