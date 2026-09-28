@@ -30,6 +30,24 @@ UPGRADE_KEYS = ["upg_launch", "upg_aero", "upg_boost", "upg_bounce", "upg_coin"]
 PHYS_KEYS = [
     "phys_v0", "phys_g", "phys_boost_k", "coin_per_m", "run_sec",
     "feel_ref_v_px", "feel_ref_g_px", "sim_time_scale", "cam_base_px_per_m",
+    "gauge_max_power",
+    "gauge_speed_base",
+    "gauge_speed_k",
+    "gauge_over_k",
+    "gauge_zone_width",
+    "gauge_great_off",
+    "gauge_good_off",
+    "gauge_perfect_mult",
+    "gauge_great_mult_min",
+    "gauge_great_mult_max",
+    "gauge_good_mult_min",
+    "gauge_good_mult_max",
+    "gauge_miss_mult_min",
+    "gauge_miss_mult_max",
+    "gauge_speed_exponent",
+    "pull_max_px",
+    "pull_min_power",
+    "launch_angle_max_deg",
 ]
 
 

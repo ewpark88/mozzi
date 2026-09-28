@@ -25,6 +25,12 @@ class MochiComponent extends PositionComponent {
   int _seenBounces = 0;
   double _spin = 0;
 
+  /// 당기기 변형: 당긴 방향(라디안, 월드 좌표)·늘어남 0~1·과충전 떨림.
+  double _pullAngle = 0;
+  double _stretch = 0;
+  bool _trembling = false;
+  double _clock = 0;
+
   final Paint _body = Paint()..color = MochiPalette.body;
   final Paint _patch = Paint()..color = MochiPalette.backPatch;
   final Paint _blush = Paint()
@@ -33,6 +39,23 @@ class MochiComponent extends PositionComponent {
   final Paint _outline = Paint()
     ..color = MochiPalette.outline
     ..style = PaintingStyle.stroke;
+
+  /// 당기는 중 변형 (GDD §2 “드래그 거리만큼 늘어남”). [offsetXM]/[offsetYM] 은 당긴 쪽으로
+  /// 끌려간 위치 (월드 m, y 아래 +). 샘플처럼 당긴 벡터의 절반만큼 따라간다.
+  void setPull({
+    required double offsetXM,
+    required double offsetYM,
+    required double stretch,
+    required bool trembling,
+  }) {
+    _stretch = stretch;
+    _trembling = trembling;
+    if (stretch > 0) {
+      _pullAngle = math.atan2(offsetYM, offsetXM);
+      final shake = trembling ? math.sin(_clock * 70) * radiusM * 0.04 : 0.0;
+      position.add(Vector2(offsetXM + shake, offsetYM));
+    }
+  }
 
   /// 시뮬 상태를 반영한다 (월드 좌표: x 오른쪽, y 아래가 +).
   void syncFrom(FlightState s) {
@@ -55,6 +78,7 @@ class MochiComponent extends PositionComponent {
     _squashV += (-_springK * _squash - _springDamping * _squashV) * dt;
     _squash += _squashV * dt;
     _spin += dt * 2.2;
+    _clock += dt;
   }
 
   @override
@@ -66,8 +90,17 @@ class MochiComponent extends PositionComponent {
     final sx = 1 / math.max(sy, 0.4);
     canvas
       ..save()
-      ..translate(c.dx, c.dy + r * (1 - sy))
-      ..scale(sx, sy);
+      ..translate(c.dx, c.dy + r * (1 - sy));
+    if (_stretch > 0) {
+      // 당긴 방향으로 늘어나고 옆으로 가늘어진다 (과충전이면 더)
+      final along = 1 + 0.45 * _stretch;
+      final across = 1 - (_trembling ? 0.22 : 0.18) * _stretch;
+      canvas
+        ..rotate(_pullAngle)
+        ..scale(along, across)
+        ..rotate(-_pullAngle);
+    }
+    canvas.scale(sx, sy);
     final bodyRect = Rect.fromCenter(
       center: Offset.zero,
       width: r * 2.1,

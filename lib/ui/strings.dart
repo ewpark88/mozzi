@@ -1,7 +1,14 @@
 /// 화면 문자열 모음 (CODING_RULES §6). P8 이후 l10n 으로 옮긴다.
 abstract final class Strings {
   static const appTitle = '모찌 런처';
-  static const tapToLaunch = '화면을 탭하면 발사! (개발용: 45° · 힘 100%)';
+  static const pullHint = '화면 아무 곳이나 누른 채 뒤로 당겼다가 놓으세요';
+  static const gradePerfect = 'PERFECT!';
+  static const gradeGreat = 'GREAT';
+  static const gradeGood = 'GOOD';
+  static const gradeMiss = '아쉬워요';
+  static String overPower(double power) => ' ${(power * 100).round()}%';
+  static String devLaunch(String grade, double power, double mult) =>
+      '$grade · 힘 ${(power * 100).round()}% · 거리 ×${mult.toStringAsFixed(3)}';
   static const retry = '다시 날리기';
   static String distance(double m) => '${m.toStringAsFixed(m < 100 ? 1 : 0)} m';
   static const devLevels = '개발용 레벨 (고무줄·공기역학·바운스)';

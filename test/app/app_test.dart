@@ -29,7 +29,7 @@ void main() {
     );
     await tester.pump();
     expect(find.byType(PlayScreen), findsOneWidget);
-    expect(find.text(Strings.tapToLaunch), findsOneWidget);
+    expect(find.text(Strings.pullHint), findsOneWidget);
   });
 
   test('번들 에셋에서 밸런스 기본값을 읽는다 (pubspec assets 등록 확인)', () async {

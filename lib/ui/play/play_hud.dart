@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:mozzi/domain/sim/flight_state.dart';
+import 'package:mozzi/domain/sim/launch_controller.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/ui/play/grade_popup.dart';
 import 'package:mozzi/ui/strings.dart';
 
 /// 비행 중 HUD: 현재 거리, 발사 안내, 정지 후 재도전 버튼.
 class PlayHud extends StatelessWidget {
   const PlayHud({
     required this.state,
+    required this.pulling,
+    required this.lastLaunch,
     required this.scale,
     required this.onRetry,
     super.key,
   });
 
   final FlightState state;
+  final bool pulling;
+  final LaunchDecision? lastLaunch;
   final double scale;
   final VoidCallback onRetry;
 
@@ -27,12 +33,16 @@ class PlayHud extends StatelessWidget {
             child: _DistanceBadge(meters: state.distanceM, scale: scale),
           ),
         ),
-        if (state.phase == FlightPhase.ready)
+        if (state.phase == FlightPhase.ready && !pulling)
           Align(
             // 모찌(지면선 80%)를 가리지 않게 하늘 쪽에 둔다
             alignment: const Alignment(0, -0.45),
-            child: _Pill(text: Strings.tapToLaunch, scale: scale),
+            child: _Pill(text: Strings.pullHint, scale: scale),
           ),
+        Align(
+          alignment: const Alignment(-0.2, -0.1),
+          child: GradePopup(decision: lastLaunch, scale: scale),
+        ),
         if (state.phase == FlightPhase.stopped)
           Align(
             alignment: const Alignment(0, 0.3),

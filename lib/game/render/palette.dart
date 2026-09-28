@@ -26,3 +26,28 @@ abstract final class BackyardPalette {
   static const soilDark = Color(0xFFB3865A);
   static const marker = Color(0xFF6B4A2F);
 }
+
+/// 정확도 게이지 구간 색 (GDD §2 판정 표 트랙 색, 진한 색은 바늘·글자용 — 2.5D 샘플 BANDS).
+abstract final class GaugePalette {
+  static const perfect = Color(0xFF1FBF63);
+  static const perfectDark = Color(0xFF0E7A3C);
+  static const great = Color(0xFF93D96A);
+  static const greatDark = Color(0xFF3E9A2A);
+  static const good = Color(0xFFFFD35C);
+  static const goodDark = Color(0xFFC98F00);
+  static const miss = Color(0xFFE6D9CB);
+  static const missDark = Color(0xFFA08C78);
+  static const warn = Color(0xFFD93025);
+  static const warnDeep = Color(0xFFB3261E);
+  static const panel = Color(0xF7FFF8EC);
+  static const panelWarn = Color(0xF7FFECEC);
+  static const powerLow = Color(0xFFFFD36B);
+  static const powerFull = Color(0xFF34C06A);
+
+  /// PERFECT 반짝이 (2.5D 샘플 burst 색).
+  static const perfectBurst = [
+    Color(0xFFFFD95A),
+    Color(0xFFFFFFFF),
+    Color(0xFFFFB020),
+  ];
+}

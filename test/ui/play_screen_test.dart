@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mozzi/domain/balance/balance_formulas.dart';
-import 'package:mozzi/domain/balance/upgrade_levels.dart';
-import 'package:mozzi/domain/balance/upgrade_type.dart';
-import 'package:mozzi/domain/sim/flight_state.dart';
 import 'package:mozzi/ui/play/hud_scale.dart';
 import 'package:mozzi/ui/play/play_screen.dart';
 import 'package:mozzi/ui/strings.dart';
@@ -45,7 +42,7 @@ void main() {
       testWidgets(name, (tester) async {
         await pumpPlay(tester, size);
         expect(tester.takeException(), isNull, reason: '오버플로 등 레이아웃 오류');
-        expect(find.text(Strings.tapToLaunch), findsOneWidget);
+        expect(find.text(Strings.pullHint), findsOneWidget);
         expect(find.text(Strings.devLevels), findsOneWidget);
       });
     });
@@ -57,23 +54,49 @@ void main() {
     expect(hudScaleOf(const Size(1366, 1024)), 1.6);
   });
 
-  testWidgets('탭하면 발사되고, 정지하면 공식 거리와 같은 기록과 재도전 버튼이 나온다', (tester) async {
+  testWidgets('당겼다 놓으면 판정이 뜨고 발사되어, 정지하면 재도전 버튼이 나온다', (tester) async {
     await pumpPlay(tester, const Size(915, 412), dev: false);
-    await tester.tapAt(const Offset(450, 200));
-    // 시뮬 시간 약 2.2초 ÷ 시간 배율 → 실제 약 1.4초. 여유 있게 3초 진행.
-    for (var i = 0; i < 180; i++) {
+    final gesture = await tester.startGesture(const Offset(450, 200));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(find.text(Strings.pullHint), findsNothing, reason: '당기는 동안 안내 숨김');
+    await gesture.moveBy(const Offset(-60, 60));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await gesture.up();
+    await tester.pump(const Duration(milliseconds: 16));
+    final grades = [
+      Strings.gradePerfect,
+      Strings.gradeGreat,
+      Strings.gradeGood,
+      Strings.gradeMiss,
+    ];
+    expect(
+      grades.any((g) => find.textContaining(g).evaluate().isNotEmpty),
+      isTrue,
+      reason: '판정 팝업',
+    );
+    for (var i = 0; i < 240; i++) {
       await tester.pump(const Duration(milliseconds: 16));
     }
     expect(find.text(Strings.retry), findsOneWidget);
-    final expected = formulas.expectedDistanceM(
-      UpgradeLevels.of(const {UpgradeType.launch: 0}),
-    );
-    expect(find.text(Strings.distance(expected)), findsOneWidget);
+    expect(find.text(Strings.distance(0)), findsNothing, reason: '날아갔어야 함');
 
     await tester.tap(find.text(Strings.retry));
     await tester.pump();
     await tester.pump();
-    expect(find.text(Strings.tapToLaunch), findsOneWidget);
-    expect(FlightPhase.values, contains(FlightPhase.ready));
+    expect(find.text(Strings.pullHint), findsOneWidget);
+  });
+
+  testWidgets('살짝 당겼다 놓으면 발사되지 않는다 (최소 힘 8%)', (tester) async {
+    await pumpPlay(tester, const Size(915, 412), dev: false);
+    final gesture = await tester.startGesture(const Offset(450, 200));
+    await gesture.moveBy(const Offset(-3, 3));
+    await gesture.up();
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(find.text(Strings.pullHint), findsOneWidget);
+    expect(find.text(Strings.distance(0)), findsOneWidget);
   });
 }

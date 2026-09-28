@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mozzi/domain/sim/flight_state.dart';
+import 'package:mozzi/domain/sim/launch_controller.dart';
+import 'package:mozzi/ui/play/grade_popup.dart';
 import 'package:mozzi/ui/strings.dart';
 
 /// 개발용 패널 (dev flavor 전용): 레벨 선택, 속도·고도·거리, 공식 거리 비교.
 class DevPanel extends StatelessWidget {
   const DevPanel({
     required this.state,
+    required this.lastLaunch,
     required this.level,
     required this.formulaDistanceM,
     required this.onLevel,
@@ -19,6 +22,7 @@ class DevPanel extends StatelessWidget {
   static const double maxWidth = 300;
 
   final FlightState state;
+  final LaunchDecision? lastLaunch;
   final int level;
   final double formulaDistanceM;
   final ValueChanged<int> onLevel;
@@ -60,6 +64,15 @@ class DevPanel extends StatelessWidget {
                 style: text,
               ),
               Text(Strings.devFormula(formulaDistanceM), style: text),
+              if (lastLaunch case final d?)
+                Text(
+                  Strings.devLaunch(
+                    gradeLabel(d.judgement.grade),
+                    d.power,
+                    d.distanceMultiplier,
+                  ),
+                  style: text,
+                ),
             ],
           ),
         ),

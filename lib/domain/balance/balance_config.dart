@@ -1,4 +1,5 @@
 import 'package:mozzi/core/json/json_reader.dart';
+import 'package:mozzi/domain/balance/launch_spec.dart';
 import 'package:mozzi/domain/balance/upgrade_type.dart';
 
 /// 업그레이드 한 종의 밸런스 값 (시트 「설정」 업그레이드 표 한 행).
@@ -63,6 +64,7 @@ class BalanceConfig {
     required this.runDurationSec,
     required this.simTimeScale,
     required this.cameraBasePxPerM,
+    required this.launch,
     required List<ZoneSpec> zones,
   }) : upgrades = Map.unmodifiable(upgrades),
        zones = List.unmodifiable(zones) {
@@ -87,6 +89,7 @@ class BalanceConfig {
       runDurationSec: r.number('run_sec'),
       simTimeScale: r.number('sim_time_scale'),
       cameraBasePxPerM: r.number('cam_base_px_per_m'),
+      launch: LaunchSpec.fromJson(r),
       zones: r.objectList('zones').map(ZoneSpec.fromJson).toList(),
     );
   }
@@ -114,6 +117,9 @@ class BalanceConfig {
 
   /// `cam_base_px_per_m` 가상 화면(높이 540) 기준 Lv0 카메라 배율 (px/m).
   final double cameraBasePxPerM;
+
+  /// 당기기·정확도 게이지 (GDD §2).
+  final LaunchSpec launch;
 
   /// 구역 목록 (시작 거리 오름차순).
   final List<ZoneSpec> zones;
