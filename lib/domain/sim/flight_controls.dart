@@ -20,6 +20,10 @@ class FlightControls {
   double _fuel;
   double _burnLeft = 0;
   bool inflating = false;
+
+  /// 오브젝트(빨간 우산)가 준 강제 활공 남은 시간과 활공비. 감속 없음.
+  double forcedGlideSec = 0;
+  double forcedGlideRatio = 0;
   bool _diving = false;
   double _diveElapsed = 0;
 
@@ -55,7 +59,15 @@ class FlightControls {
 
   void tick(double dt) {
     if (_diving) _diveElapsed += dt;
+    if (forcedGlideSec > 0) forcedGlideSec = math.max(0, forcedGlideSec - dt);
   }
+
+  /// 지금 적용할 활공비 (없으면 null). 강제 활공이 부풀리기보다 우선.
+  double? glideRatio(double inflateRatio) => forcedGlideSec > 0
+      ? forcedGlideRatio
+      : inflating
+      ? inflateRatio
+      : null;
 
   /// 땅에 닿음: 분사 중이던 연료는 사라지고(공중에서 써야 함) 급강하가 끝난다.
   /// 볼 부풀리기는 손을 떼기 전까지 유지 (튄 뒤에도 계속 활공).

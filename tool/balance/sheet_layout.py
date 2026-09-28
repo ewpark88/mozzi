@@ -18,3 +18,12 @@ BOSS_FIRST_ROW = 42  # A 이름, B 키, C 값
 BOSS_KEYS = [
     "boss_2_5_rival_time_sec", "boss_2_5_pigeon_mult", "boss_fail_ease_step", "boss_fail_ease_max",
 ]
+
+# 「오브젝트」 시트 (GDD §4 월드 테마·배치 규칙)
+OBJECT_SHEET = "오브젝트"
+OBJECT_FIRST_ROW = 5  # A 키, B 이름, C 월드, D 분류, E 반지름, F~H 값1~3
+OBJECT_COUNT = 12
+SPAWN_FIRST_ROW = 20  # B 키, C 값
+SPAWN_COUNT = 8
+WEIGHT_HEADER_ROW = 31  # B.. 키, 마지막 열 obstacle_ratio
+WEIGHT_WORLDS = [1, 2, 3]

@@ -34,6 +34,7 @@
   "feel_ref_g_px": 1400,
   "sim_time_scale": 1.6484,
   "cam_base_px_per_m": 52.576,
+  "mochi_radius_px": 38,
   "gauge_max_power": 1.1,
   "gauge_speed_base": 0.45,
   "gauge_speed_k": 1.35,
@@ -479,5 +480,174 @@
   "boss_2_5_rival_time_sec": 16,
   "boss_2_5_pigeon_mult": 1.5,
   "boss_fail_ease_step": 0.05,
-  "boss_fail_ease_max": 0.15
+  "boss_fail_ease_max": 0.15,
+  "objects": {
+    "seed": {
+      "world": 1,
+      "category": "pickup",
+      "radius_m": 0.25,
+      "p": [
+        1,
+        0,
+        0
+      ]
+    },
+    "tramp": {
+      "world": 1,
+      "category": "bounce",
+      "radius_m": 1.2,
+      "p": [
+        1.08,
+        11,
+        1.04
+      ]
+    },
+    "clothesline": {
+      "world": 1,
+      "category": "bounce",
+      "radius_m": 1,
+      "p": [
+        0.9,
+        8,
+        1.15
+      ]
+    },
+    "balloon": {
+      "world": 2,
+      "category": "lift",
+      "radius_m": 0.5,
+      "p": [
+        12.1,
+        0.5,
+        1
+      ]
+    },
+    "fountain": {
+      "world": 2,
+      "category": "lift",
+      "radius_m": 1,
+      "p": [
+        18,
+        0.7,
+        0
+      ]
+    },
+    "pigeon": {
+      "world": 2,
+      "category": "boost",
+      "radius_m": 0.6,
+      "p": [
+        1.3,
+        3,
+        0
+      ]
+    },
+    "updraft": {
+      "world": 3,
+      "category": "area",
+      "radius_m": 2,
+      "p": [
+        30,
+        12,
+        0
+      ]
+    },
+    "umbrella": {
+      "world": 3,
+      "category": "glide",
+      "radius_m": 0.6,
+      "p": [
+        3,
+        0.15,
+        0
+      ]
+    },
+    "billboard": {
+      "world": 3,
+      "category": "seeds",
+      "radius_m": 1.5,
+      "p": [
+        8,
+        0.1,
+        0
+      ]
+    },
+    "branch": {
+      "world": 2,
+      "category": "obstacle",
+      "radius_m": 0.8,
+      "p": [
+        0.15,
+        0,
+        0
+      ]
+    },
+    "wire": {
+      "world": 3,
+      "category": "obstacle",
+      "radius_m": 0.5,
+      "p": [
+        0.2,
+        3,
+        0
+      ]
+    },
+    "crow": {
+      "world": 3,
+      "category": "obstacle",
+      "radius_m": 0.6,
+      "p": [
+        0.15,
+        3,
+        0
+      ]
+    }
+  },
+  "spawn": {
+    "spawn_chunk_m": 100,
+    "spawn_min_spacing_m": 5,
+    "spawn_spacing_ratio": 0.08,
+    "spawn_scale_ref_m": 6,
+    "spawn_min_h_m": 1,
+    "spawn_h_base_m": 4,
+    "spawn_h_ratio": 0.3,
+    "seed_row_count": 5
+  },
+  "spawn_weights": [
+    {
+      "world": 1,
+      "obstacle_ratio": 0,
+      "weights": {
+        "seed": 0.45,
+        "tramp": 0.35,
+        "clothesline": 0.2
+      }
+    },
+    {
+      "world": 2,
+      "obstacle_ratio": 0.1,
+      "weights": {
+        "seed": 0.35,
+        "tramp": 0.15,
+        "balloon": 0.2,
+        "fountain": 0.15,
+        "pigeon": 0.15,
+        "branch": 1
+      }
+    },
+    {
+      "world": 3,
+      "obstacle_ratio": 0.2,
+      "weights": {
+        "seed": 0.3,
+        "tramp": 0.1,
+        "balloon": 0.1,
+        "updraft": 0.2,
+        "umbrella": 0.1,
+        "billboard": 0.2,
+        "wire": 0.5,
+        "crow": 0.5
+      }
+    }
+  ]
 }

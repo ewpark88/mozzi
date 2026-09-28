@@ -20,6 +20,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sheet_layout import (  # noqa: E402
     BOSS_FIRST_ROW, BOSS_KEYS, MOON_ROW, STAGE_COUNT, STAGE_FIRST_ROW, STAGE_SHEET, STAR2_ROW,
     UNLOCK_FIRST_ROW, UNLOCK_WORLDS,
+    OBJECT_COUNT, OBJECT_FIRST_ROW, OBJECT_SHEET, SPAWN_COUNT, SPAWN_FIRST_ROW,
+    WEIGHT_HEADER_ROW, WEIGHT_WORLDS,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,7 +32,7 @@ FIXTURE = ROOT / "test" / "fixtures" / "balance_sheet_expected.json"
 UPGRADE_KEYS = ["upg_launch", "upg_aero", "upg_boost", "upg_bounce", "upg_coin"]
 PHYS_KEYS = [
     "phys_v0", "phys_g", "phys_boost_k", "coin_per_m", "run_sec",
-    "feel_ref_v_px", "feel_ref_g_px", "sim_time_scale", "cam_base_px_per_m",
+    "feel_ref_v_px", "feel_ref_g_px", "sim_time_scale", "cam_base_px_per_m", "mochi_radius_px",
     "gauge_max_power",
     "gauge_speed_base",
     "gauge_speed_k",
@@ -100,7 +102,41 @@ def build(wb) -> dict:
     ]
     if missing or len(zones) != 6:
         raise SystemExit(f"시트 파싱 실패: missing={missing}, zones={len(zones)}")
-    return {"_source": XLSX.name, **upgrades, **phys, "zones": zones, **build_stages(wb)}
+    return {
+        "_source": XLSX.name, **upgrades, **phys, "zones": zones,
+        **build_stages(wb), **build_objects(wb),
+    }
+
+
+def build_objects(wb) -> dict:
+    """「오브젝트」 시트: 종류별 효과 값, 배치 설정, 월드별 비중 (GDD §4)."""
+    ws = wb[OBJECT_SHEET]
+    objects = {}
+    for row in range(OBJECT_FIRST_ROW, OBJECT_FIRST_ROW + OBJECT_COUNT):
+        key = ws[f"A{row}"].value
+        objects[key] = {
+            "world": _num(ws[f"C{row}"].value),
+            "category": ws[f"D{row}"].value,
+            "radius_m": _num(ws[f"E{row}"].value),
+            "p": [_num(ws[f"{c}{row}"].value or 0) for c in "FGH"],
+        }
+    spawn = {}
+    for row in range(SPAWN_FIRST_ROW, SPAWN_FIRST_ROW + SPAWN_COUNT):
+        spawn[ws[f"B{row}"].value] = _num(ws[f"C{row}"].value)
+    header = [c.value for c in ws[WEIGHT_HEADER_ROW][1:] if c.value is not None]
+    weights = []
+    for i, world in enumerate(WEIGHT_WORLDS):
+        row = ws[WEIGHT_HEADER_ROW + 1 + i]
+        if _num(row[0].value) != world:
+            raise SystemExit(f"배치 비중 표 파싱 실패: {row[0].value} != {world}")
+        values = {k: _num(row[1 + j].value) for j, k in enumerate(header)}
+        ratio = values.pop("obstacle_ratio")
+        weights.append({"world": world, "obstacle_ratio": ratio,
+                        "weights": {k: v for k, v in values.items() if v}})
+    unknown = [k for w in weights for k in w["weights"] if k not in objects]
+    if unknown:
+        raise SystemExit(f"배치 비중에 없는 오브젝트: {unknown}")
+    return {"objects": objects, "spawn": spawn, "spawn_weights": weights}
 
 
 def build_stages(wb) -> dict:

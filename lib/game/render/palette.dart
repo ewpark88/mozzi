@@ -61,3 +61,105 @@ abstract final class FxPalette {
   static const fuel = Color(0xFFFF7A3D);
   static const fuelEmpty = Color(0xFFC9B9A6);
 }
+
+/// 오브젝트 플레이스홀더 색 (P7 에서 2.5D 셰이딩으로 교체).
+abstract final class ObjectPalette {
+  static const seed = Color(0xFFFFC93C);
+  static const tramp = Color(0xFF2E86C1);
+  static const trampLeg = Color(0xFF5D6D7E);
+  static const clothesline = Color(0xFF8D6E63);
+  static const cloth = Color(0xFFFFFFFF);
+  static const string = Color(0xFF9E9E9E);
+  static const balloonRed = Color(0xFFFF6B6B);
+  static const balloonYellow = Color(0xFFFFC93C);
+  static const water = Color(0xFF5DADE2);
+  static const stone = Color(0xFFB0A89A);
+  static const pigeon = Color(0xFF9FA8B2);
+  static const updraft = Color(0xFFD6EAF8);
+  static const umbrella = Color(0xFFE74C3C);
+  static const billboard = Color(0xFFF4D03F);
+  static const branch = Color(0xFF6E4B2A);
+  static const wire = Color(0xFF2C2C2C);
+  static const crow = Color(0xFF1B1B1B);
+  static const goalFlag = Color(0xFFE74C3C);
+  static const goalTape = Color(0xFFFFFFFF);
+
+  /// 골 폭죽.
+  static const confetti = [
+    Color(0xFFFF6B6B),
+    Color(0xFFFFC93C),
+    Color(0xFF5DADE2),
+    Color(0xFF58D68D),
+  ];
+}
+
+/// 월드별 배경 색 (GDD §3 구역별 조명: 뒷마당 아침, 도시 노을). P7 에서 대기 원근·조명으로 확장.
+class WorldPalette {
+  const WorldPalette({
+    required this.skyTop,
+    required this.skyBottom,
+    required this.far,
+    required this.mid,
+    required this.near,
+  });
+
+  static const backyard = WorldPalette(
+    skyTop: BackyardPalette.skyTop,
+    skyBottom: BackyardPalette.skyBottom,
+    far: BackyardPalette.far,
+    mid: BackyardPalette.mid,
+    near: BackyardPalette.near,
+  );
+
+  static const park = WorldPalette(
+    skyTop: Color(0xFF8FD3F4),
+    skyBottom: Color(0xFFE6F6FF),
+    far: Color(0xFFB5D8C4),
+    mid: Color(0xFF7FBF7F),
+    near: Color(0xFF4F9D57),
+  );
+
+  static const city = WorldPalette(
+    skyTop: Color(0xFFF6A96B),
+    skyBottom: Color(0xFFFCE3C1),
+    far: Color(0xFFC9A7B8),
+    mid: Color(0xFFA58AA0),
+    near: Color(0xFF7C6F8E),
+  );
+
+  /// 월드 번호 → 색 (월드 4~6 은 P11 전까지 도시 색).
+  static WorldPalette of(int world) => switch (world) {
+    1 => backyard,
+    2 => park,
+    _ => city,
+  };
+
+  /// 다음 월드 원경을 경계 이만큼 전부터 미리 보여준다 (GDD §4 배치 규칙).
+  static const double previewM = 100;
+
+  /// 거리 [xM] 의 배경 색. [worldStartsM] 은 월드 1부터의 시작 거리.
+  static WorldPalette atDistance(List<double> worldStartsM, double xM) {
+    var world = 1;
+    for (var i = 0; i < worldStartsM.length; i++) {
+      if (xM >= worldStartsM[i]) world = i + 1;
+    }
+    final here = of(world);
+    if (world >= worldStartsM.length) return here;
+    final t = 1 - (worldStartsM[world] - xM) / previewM;
+    return t <= 0 ? here : here.lerp(of(world + 1), t.clamp(0, 1));
+  }
+
+  final Color skyTop;
+  final Color skyBottom;
+  final Color far;
+  final Color mid;
+  final Color near;
+
+  WorldPalette lerp(WorldPalette other, double t) => WorldPalette(
+    skyTop: Color.lerp(skyTop, other.skyTop, t)!,
+    skyBottom: Color.lerp(skyBottom, other.skyBottom, t)!,
+    far: Color.lerp(far, other.far, t)!,
+    mid: Color.lerp(mid, other.mid, t)!,
+    near: Color.lerp(near, other.near, t)!,
+  );
+}

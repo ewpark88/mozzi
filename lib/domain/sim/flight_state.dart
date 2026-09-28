@@ -67,6 +67,36 @@ class FlightState {
   final bool inflating;
   final bool diving;
 
+  FlightState copyWith({
+    FlightPhase? phase,
+    double? xM,
+    double? yM,
+    double? vxMps,
+    double? vyMps,
+    double? simTimeSec,
+    int? bounces,
+    double? maxHeightM,
+    double? fuelSec,
+    double? fuelMaxSec,
+    bool? boosting,
+    bool? inflating,
+    bool? diving,
+  }) => FlightState(
+    phase: phase ?? this.phase,
+    xM: xM ?? this.xM,
+    yM: yM ?? this.yM,
+    vxMps: vxMps ?? this.vxMps,
+    vyMps: vyMps ?? this.vyMps,
+    simTimeSec: simTimeSec ?? this.simTimeSec,
+    bounces: bounces ?? this.bounces,
+    maxHeightM: maxHeightM ?? this.maxHeightM,
+    fuelSec: fuelSec ?? this.fuelSec,
+    fuelMaxSec: fuelMaxSec ?? this.fuelMaxSec,
+    boosting: boosting ?? this.boosting,
+    inflating: inflating ?? this.inflating,
+    diving: diving ?? this.diving,
+  );
+
   /// 이번 판 거리 (m). 결과·씨앗 계산에 쓴다.
   double get distanceM => xM;
 

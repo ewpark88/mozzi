@@ -4,7 +4,7 @@ publish_to: 'none'
 
 # 버전 규칙: docs/BUILD_RELEASE.md §3 참조.
 # MAJOR.MINOR.PATCH+BUILD — MVP 기간은 0.x, BUILD는 스토어 업로드마다 +1.
-version: 0.4.0+5
+version: 0.5.0+6
 
 environment:
   sdk: ^3.12.0

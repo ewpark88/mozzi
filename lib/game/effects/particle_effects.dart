@@ -64,4 +64,54 @@ abstract final class ParticleEffects {
       ),
     );
   }
+
+  /// 골 통과 폭죽 (GDD §4 클리어 연출). [size] 는 화면에 보이는 크기 기준 (m).
+  static ParticleSystemComponent goalConfetti(
+    Vector2 at,
+    double size,
+    math.Random rnd,
+  ) {
+    const colors = ObjectPalette.confetti;
+    return ParticleSystemComponent(
+      position: at.clone(),
+      particle: Particle.generate(
+        count: 40,
+        lifespan: 1.4,
+        generator: (i) {
+          final a = -math.pi / 2 + (rnd.nextDouble() - 0.5) * 1.6;
+          final v = size * (1.5 + rnd.nextDouble());
+          return AcceleratedParticle(
+            speed: Vector2(math.cos(a) * v, math.sin(a) * v),
+            acceleration: Vector2(0, size * 1.5),
+            child: CircleParticle(
+              radius: size * 0.03,
+              paint: Paint()..color = colors[i % colors.length],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// 오브젝트 적중 반짝 (씨앗은 노랑, 그 외 흰색).
+  static ParticleSystemComponent hitSparkle(
+    Vector2 at,
+    double r,
+    Color color,
+    math.Random rnd,
+  ) => ParticleSystemComponent(
+    position: at.clone(),
+    particle: Particle.generate(
+      count: 8,
+      lifespan: 0.4,
+      generator: (i) {
+        final a = rnd.nextDouble() * math.pi * 2;
+        final v = r * (3 + rnd.nextDouble() * 3);
+        return AcceleratedParticle(
+          speed: Vector2(math.cos(a) * v, math.sin(a) * v),
+          child: CircleParticle(radius: r * 0.1, paint: Paint()..color = color),
+        );
+      },
+    ),
+  );
 }

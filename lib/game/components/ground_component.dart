@@ -7,6 +7,16 @@ import 'package:mozzi/game/render/palette.dart';
 class GroundComponent extends Component with HasGameReference {
   GroundComponent({required this.grassDepthM, required this.bladeSpacingM});
 
+  /// 2.5D 샘플 치수(풀 30px, 풀잎 간격 46px)를 기본 카메라 배율로 미터 환산.
+  factory GroundComponent.sample({required double basePxPerM}) =>
+      GroundComponent(
+        grassDepthM: _sampleGrassPx / basePxPerM,
+        bladeSpacingM: _sampleBladeSpacingPx / basePxPerM,
+      );
+
+  static const double _sampleGrassPx = 30;
+  static const double _sampleBladeSpacingPx = 46;
+
   /// 풀 띠 두께 (m).
   final double grassDepthM;
 

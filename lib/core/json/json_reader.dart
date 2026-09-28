@@ -49,6 +49,35 @@ class JsonReader {
     throw JsonFormatError('$path.$key', '문자열이 아님 ($v)');
   }
 
+  bool boolean(String key) {
+    final v = _require(key);
+    if (v is bool) return v;
+    throw JsonFormatError('$path.$key', '참/거짓이 아님 ($v)');
+  }
+
+  /// 키가 있고 값이 null 인지.
+  bool isNull(String key) => _require(key) == null;
+
+  List<double> numberList(String key) {
+    final v = _require(key);
+    if (v is! List<Object?>) {
+      throw JsonFormatError('$path.$key', '배열이 아님 ($v)');
+    }
+    return [
+      for (var i = 0; i < v.length; i++)
+        switch (v[i]) {
+          final num n => n.toDouble(),
+          final other => throw JsonFormatError(
+            '$path.$key[$i]',
+            '숫자가 아님 ($other)',
+          ),
+        },
+    ];
+  }
+
+  /// 원본 맵 (타입별 파라미터처럼 구조가 자유로운 값용, 수정 불가).
+  Map<String, Object?> raw() => Map.unmodifiable(_map);
+
   JsonReader object(String key) =>
       JsonReader(_require(key), path: '$path.$key');
 

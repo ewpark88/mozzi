@@ -1,6 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:mozzi/domain/balance/balance_formulas.dart';
+import 'package:mozzi/domain/balance/stage_spec.dart';
 import 'package:mozzi/domain/balance/upgrade_levels.dart';
 import 'package:mozzi/domain/balance/upgrade_type.dart';
 import 'package:mozzi/game/mozzi_game.dart';
@@ -8,6 +9,7 @@ import 'package:mozzi/ui/play/dev_panel.dart';
 import 'package:mozzi/ui/play/flight_hud.dart';
 import 'package:mozzi/ui/play/hud_scale.dart';
 import 'package:mozzi/ui/play/play_hud.dart';
+import 'package:mozzi/ui/play/stage_hud.dart';
 
 /// 한 판 플레이 화면: 당기기(게이지) → 발사 → 비행 → 정지 → 재도전 (GDD §2).
 ///
@@ -26,10 +28,18 @@ class _PlayScreenState extends State<PlayScreen> {
   late final MozziGame _game;
   int _devLevel = 0;
 
+  /// 도전 중인 스테이지 (P6 월드맵 전까지 1-1 부터, 개발용 선택 가능).
+  StageSpec? _stage;
+
   @override
   void initState() {
     super.initState();
-    _game = MozziGame(formulas: widget.formulas, levels: _levelsFor(0));
+    _stage = widget.formulas.config.world.stage(1, 1);
+    _game = MozziGame(
+      formulas: widget.formulas,
+      levels: _levelsFor(0),
+      stage: _stage,
+    );
   }
 
   /// 개발용: 비행에 영향 주는 4종(볼주머니 제외)을 같은 레벨로. Lv0 은 부스터 연료 없음 →
@@ -41,11 +51,16 @@ class _PlayScreenState extends State<PlayScreen> {
     UpgradeType.bounce: lv,
   });
 
-  void _retry() => _game.resetRun(_game.levels);
+  void _retry() => _game.resetRun(_game.levels, stage: _stage);
+
+  void _setStage(StageSpec? stage) {
+    setState(() => _stage = stage);
+    _game.resetRun(_game.levels, stage: stage);
+  }
 
   void _setDevLevel(int lv) {
     setState(() => _devLevel = lv);
-    _game.resetRun(_levelsFor(lv));
+    _game.resetRun(_levelsFor(lv), stage: _stage);
   }
 
   @override
@@ -71,6 +86,7 @@ class _PlayScreenState extends State<PlayScreen> {
                   child: ListenableBuilder(
                     listenable: Listenable.merge([
                       _game.flightState,
+                      _game.runHud,
                       _game.pulling,
                       _game.lastLaunch,
                     ]),
@@ -79,6 +95,11 @@ class _PlayScreenState extends State<PlayScreen> {
                       final last = _game.lastLaunch.value;
                       return Stack(
                         children: [
+                          StageHud(
+                            info: _game.runHud.value,
+                            distanceM: state.distanceM,
+                            scale: scale,
+                          ),
                           Positioned(
                             left: 0,
                             bottom: 0,
@@ -102,6 +123,11 @@ class _PlayScreenState extends State<PlayScreen> {
                               right: 8 * scale,
                               bottom: 8 * scale,
                               child: DevPanel(
+                                stages: widget.formulas.config.world.stages
+                                    .where((s) => s.world <= 3)
+                                    .toList(),
+                                stage: _stage,
+                                onStage: _setStage,
                                 state: state,
                                 lastLaunch: last,
                                 level: _devLevel,

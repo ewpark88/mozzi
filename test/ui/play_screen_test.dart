@@ -76,7 +76,12 @@ void main() {
       isTrue,
       reason: '판정 팝업',
     );
-    for (var i = 0; i < 240; i++) {
+    // 오브젝트(트램폴린 등)로 비행 시간이 달라지므로 멈출 때까지 (최대 30초)
+    for (
+      var i = 0;
+      i < 1900 && find.text(Strings.retry).evaluate().isEmpty;
+      i++
+    ) {
       await tester.pump(const Duration(milliseconds: 16));
     }
     expect(find.text(Strings.retry), findsOneWidget);

@@ -11,6 +11,17 @@ abstract final class Strings {
       '$grade · 힘 ${(power * 100).round()}% · 거리 ×${mult.toStringAsFixed(3)}';
   static const retry = '다시 날리기';
   static const fuel = '연료';
+  static String stageGoal(String id, double goalM) =>
+      '$id · 목표 ${goalM.round()}m';
+  static String stageMoon(String id) => '$id · 달 착륙';
+  static String star3Mission(String text) => '★★★ $text';
+  static String toGoal(double m) => '골까지 ${m.round()}m';
+  static String seedsPicked(int n) => '씨앗 $n';
+  static String combo(int n) => '콤보 $n';
+  static const cleared = '클리어!';
+  static const notCleared = '아쉬워요, 다시!';
+  static const devStage = '스테이지';
+  static const devFree = '자유';
   static const hintBoost = '탭: 부스터';
   static const hintInflate = '꾹: 볼 부풀리기';
   static const hintDive = '아래로 쓸기: 급강하';

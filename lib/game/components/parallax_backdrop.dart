@@ -11,6 +11,9 @@ abstract interface class ParallaxSource {
 
   /// 현재 줌 (실제 px / m).
   double get cameraZoom;
+
+  /// 지금 배경 색 (다음 월드 경계 100m 전부터 섞임, GDD §4 배치 규칙).
+  WorldPalette get backdropPalette;
 }
 
 /// 배경 5레이어 중 뒤쪽 4개: 하늘 + 원경·중경·근경 (GDD §3 배경 5레이어).
@@ -21,11 +24,11 @@ class ParallaxBackdrop extends Component with HasGameReference {
 
   final ParallaxSource source;
 
-  /// (스크롤 비율, 화면 높이 대비 기준선, 언덕 높이 비율, 색)
-  static const List<(double, double, double, Color)> _layers = [
-    (0.05, 0.62, 0.22, BackyardPalette.far),
-    (0.15, 0.70, 0.16, BackyardPalette.mid),
-    (0.35, 0.78, 0.10, BackyardPalette.near),
+  /// (스크롤 비율, 화면 높이 대비 기준선, 언덕 높이 비율)
+  static const List<(double, double, double)> _layers = [
+    (0.05, 0.62, 0.22),
+    (0.15, 0.70, 0.16),
+    (0.35, 0.78, 0.10),
   ];
 
   final Paint _paint = Paint();
@@ -33,18 +36,20 @@ class ParallaxBackdrop extends Component with HasGameReference {
   @override
   void render(Canvas canvas) {
     final size = game.size;
+    final palette = source.backdropPalette;
+    final colors = [palette.far, palette.mid, palette.near];
     final sky = Rect.fromLTWH(0, 0, size.x, size.y);
     _paint.shader = Gradient.linear(
       Offset.zero,
       Offset(0, size.y),
-      const [BackyardPalette.skyTop, BackyardPalette.skyBottom],
+      [palette.skyTop, palette.skyBottom],
     );
     canvas.drawRect(sky, _paint);
     _paint.shader = null;
     final scrollPx = source.cameraFocusXM * source.cameraZoom;
     for (var i = 0; i < _layers.length; i++) {
-      final (factor, base, amp, color) = _layers[i];
-      _paint.color = color;
+      final (factor, base, amp) = _layers[i];
+      _paint.color = colors[i];
       canvas.drawPath(
         _hills(size.x, size.y, scrollPx * factor, base, amp, i),
         _paint,

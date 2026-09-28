@@ -2,6 +2,7 @@ import 'package:mozzi/core/json/json_reader.dart';
 import 'package:mozzi/domain/balance/flight_control_spec.dart';
 import 'package:mozzi/domain/balance/launch_spec.dart';
 import 'package:mozzi/domain/balance/upgrade_type.dart';
+import 'package:mozzi/domain/balance/world_config.dart';
 
 /// 업그레이드 한 종의 밸런스 값 (시트 「설정」 업그레이드 표 한 행).
 class UpgradeSpec {
@@ -67,6 +68,8 @@ class BalanceConfig {
     required this.cameraBasePxPerM,
     required this.launch,
     required this.controls,
+    required this.mochiRadiusPx,
+    required this.world,
     required List<ZoneSpec> zones,
   }) : upgrades = Map.unmodifiable(upgrades),
        zones = List.unmodifiable(zones) {
@@ -93,6 +96,8 @@ class BalanceConfig {
       cameraBasePxPerM: r.number('cam_base_px_per_m'),
       launch: LaunchSpec.fromJson(r),
       controls: FlightControlSpec.fromJson(r),
+      mochiRadiusPx: r.number('mochi_radius_px'),
+      world: WorldConfig.fromJson(r),
       zones: r.objectList('zones').map(ZoneSpec.fromJson).toList(),
     );
   }
@@ -126,6 +131,15 @@ class BalanceConfig {
 
   /// 비행 중 조작 3종 (GDD §2).
   final FlightControlSpec controls;
+
+  /// 2.5D 샘플 모찌 반지름 (가상 px).
+  final double mochiRadiusPx;
+
+  /// 월드·스테이지·오브젝트 (GDD §4).
+  final WorldConfig world;
+
+  /// 모찌 충돌 반지름 (m) = 샘플 반지름 / 기본 카메라 배율.
+  double get mochiRadiusM => mochiRadiusPx / cameraBasePxPerM;
 
   /// 구역 목록 (시작 거리 오름차순).
   final List<ZoneSpec> zones;

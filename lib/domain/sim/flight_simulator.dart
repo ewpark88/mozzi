@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:mozzi/domain/sim/flight_controls.dart';
 import 'package:mozzi/domain/sim/flight_params.dart';
 import 'package:mozzi/domain/sim/flight_state.dart';
+import 'package:mozzi/domain/sim/landing.dart';
 
 /// 결정론 비행 시뮬레이터 (ADR-001, ADR-012) + 비행 중 조작 3종 (GDD §2, P4).
 ///
@@ -73,6 +74,25 @@ class FlightSimulator {
     return true;
   }
 
+  /// 오브젝트 효과로 속도(와 높이)를 바꾼다 (공중에서만, P5). 튕기면 급강하가 끝난다.
+  void redirect({double? vx, double? vy, double? y, bool endDive = false}) {
+    if (!_airborne) return;
+    if (endDive) _controls.onGround();
+    _state = _copy(y: y, vx: vx, vy: vy);
+  }
+
+  /// 빨간 우산: [sec] 초 동안 완전 활공 (낙하 ≤ 수평 × [ratio], 감속 없음).
+  void forceGlide({required double sec, required double ratio}) {
+    if (!_airborne) return;
+    _controls
+      ..forcedGlideSec = sec
+      ..forcedGlideRatio = ratio;
+  }
+
+  /// 급강하 시작 후 시간 (급강하 중이 아니면 null) — 퍼펙트 판정용.
+  double? get diveElapsedSec =>
+      _controls.diving ? _controls.diveElapsedSec : null;
+
   /// [fixedDt] 만큼 진행한다. 정지 후에는 아무것도 하지 않는다.
   void step() => _advance(fixedDt);
 
@@ -100,10 +120,11 @@ class FlightSimulator {
 
   /// 공중 진행. 볼 부풀리기 중이면 낙하 속도 상한에 닿는 순간을 기준으로 구간을 나눈다.
   void _stepFlying(double dt) {
-    if (_controls.inflating) {
-      final cap = params.controls.inflateGlideRatio * _state.vxMps;
+    final ratio = _controls.glideRatio(params.controls.inflateGlideRatio);
+    if (ratio != null) {
+      final cap = ratio * _state.vxMps;
       if (_state.vyMps <= -cap) {
-        _glide(dt, cap);
+        _glide(dt, ratio);
         return;
       }
       final tCap = (_state.vyMps + cap) / params.gravityMps2;
@@ -145,9 +166,10 @@ class FlightSimulator {
     if (remaining > 0) _advance(remaining);
   }
 
-  /// 볼 부풀리기 활공: 낙하 속도 = 상한 [cap] 로 일정.
-  void _glide(double dt, double cap) {
+  /// 활공: 낙하 속도 = 수평 속도 × [ratio] 로 일정.
+  void _glide(double dt, double ratio) {
     final s = _state;
+    final cap = ratio * s.vxMps;
     final yEnd = s.yM - cap * dt;
     if (yEnd > 0) {
       final vxEnd = _dragged(s.vxMps, dt);
@@ -156,7 +178,7 @@ class FlightSimulator {
         y: yEnd,
         vx: vxEnd,
         // 감속된 수평 속도 기준으로 상한을 다시 맞춘다
-        vy: -params.controls.inflateGlideRatio * vxEnd,
+        vy: -ratio * vxEnd,
         time: s.simTimeSec + dt,
       );
       return;
@@ -186,48 +208,24 @@ class FlightSimulator {
     required double maxHeight,
   }) {
     _controls.onGround();
-    final e = params.restitution;
-    final vxOut = vx * e;
-    final vyOut = -vyImpact * e;
-    final bounces = _state.bounces + 1;
-    if (vyOut >= slideThresholdMps) {
-      _state = _copy(
-        x: xHit,
-        y: 0,
-        vx: vxOut,
-        vy: vyOut,
-        time: time,
-        bounces: bounces,
-        maxHeight: maxHeight,
-      );
-      return;
-    }
-    // 남은 튐 거리 = Σ (2·vx·vy/g)·e^(2k) = (2·vx·vy/g) / (1 − e²)
-    final tail = (2 * vxOut * vyOut / params.gravityMps2) / (1 - e * e);
-    if (tail <= 0 || vxOut <= 0) {
-      _state = _copy(
-        x: xHit,
-        y: 0,
-        vx: 0,
-        vy: 0,
-        time: time,
-        bounces: bounces,
-        maxHeight: maxHeight,
-        phase: FlightPhase.stopped,
-      );
-      return;
-    }
-    _slideEndX = xHit + tail;
-    _slideDecel = vxOut * vxOut / (2 * tail);
+    final out = LandingOutcome.resolve(
+      vxMps: vx,
+      vyImpactMps: vyImpact,
+      restitution: params.restitution,
+      gravityMps2: params.gravityMps2,
+      slideThresholdMps: slideThresholdMps,
+    );
+    _slideEndX = xHit + out.slideM;
+    _slideDecel = out.slideDecel;
     _state = _copy(
       x: xHit,
       y: 0,
-      vx: vxOut,
-      vy: 0,
+      vx: out.vxMps,
+      vy: out.vyMps,
       time: time,
-      bounces: bounces,
+      bounces: _state.bounces + 1,
       maxHeight: maxHeight,
-      phase: FlightPhase.sliding,
+      phase: out.phase,
     );
   }
 
@@ -266,17 +264,16 @@ class FlightSimulator {
     double? maxHeight,
     FlightPhase? phase,
   }) {
-    final p = phase ?? _state.phase;
-    final airborne = p == FlightPhase.flying;
-    return FlightState(
-      phase: p,
-      xM: x ?? _state.xM,
-      yM: y ?? _state.yM,
-      vxMps: vx ?? _state.vxMps,
-      vyMps: vy ?? _state.vyMps,
-      simTimeSec: time ?? _state.simTimeSec,
-      bounces: bounces ?? _state.bounces,
-      maxHeightM: maxHeight ?? _state.maxHeightM,
+    final airborne = (phase ?? _state.phase) == FlightPhase.flying;
+    return _state.copyWith(
+      phase: phase,
+      xM: x,
+      yM: y,
+      vxMps: vx,
+      vyMps: vy,
+      simTimeSec: time,
+      bounces: bounces,
+      maxHeightM: maxHeight,
       fuelSec: _controls.fuelSec,
       fuelMaxSec: _controls.fuelMaxSec,
       boosting: airborne && _controls.boosting,
