@@ -18,7 +18,8 @@ import openpyxl
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sheet_layout import (  # noqa: E402
-    STAGE_COUNT, STAGE_FIRST_ROW, STAGE_SHEET, STAR2_ROW, UNLOCK_FIRST_ROW, UNLOCK_WORLDS,
+    BOSS_FIRST_ROW, BOSS_KEYS, MOON_ROW, STAGE_COUNT, STAGE_FIRST_ROW, STAGE_SHEET, STAR2_ROW,
+    UNLOCK_FIRST_ROW, UNLOCK_WORLDS,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -106,13 +107,22 @@ def build_stages(wb) -> dict:
     """「스테이지」 시트 입력값 (GDD §4 스테이지 구조)."""
     ws = wb[STAGE_SHEET]
     stages = []
-    for row in range(STAGE_FIRST_ROW, STAGE_FIRST_ROW + STAGE_COUNT):
+    for row in [*range(STAGE_FIRST_ROW, STAGE_FIRST_ROW + STAGE_COUNT), MOON_ROW]:
+        target = ws[f"C{row}"].value
         stages.append({
             "world": _num(ws[f"A{row}"].value),
             "stage": _num(ws[f"B{row}"].value),
-            "target_m": _num(ws[f"C{row}"].value),
+            "target_m": _num(target) if target is not None else None,
             "boss": ws[f"D{row}"].value == "보스",
+            "star3": json.loads(ws[f"I{row}"].value),
+            "star3_text": ws[f"J{row}"].value,
         })
+    boss = {}
+    for i, key in enumerate(BOSS_KEYS):
+        row = BOSS_FIRST_ROW + i
+        if ws[f"B{row}"].value != key:
+            raise SystemExit(f"보스 표 파싱 실패: {row}행 {ws[f'B{row}'].value} != {key}")
+        boss[key] = _num(ws[f"C{row}"].value)
     unlock = [
         {"world": _num(ws[f"A{UNLOCK_FIRST_ROW + i}"].value),
          "stars": _num(ws[f"C{UNLOCK_FIRST_ROW + i}"].value)}
@@ -124,6 +134,7 @@ def build_stages(wb) -> dict:
         "stages": stages,
         "stage_star2_ratio": _num(ws[f"C{STAR2_ROW}"].value),
         "world_unlock_stars": unlock,
+        **boss,
     }
 
 

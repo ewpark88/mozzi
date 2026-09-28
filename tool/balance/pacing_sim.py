@@ -130,7 +130,7 @@ def main() -> int:
 
     # 「스테이지」 시트: 스테이지 목표 거리 도달 판수 (E~H)
     stage_expected = {}
-    targets = [s["target_m"] for s in cfg["stages"]]
+    targets = [s["target_m"] for s in cfg["stages"] if s["target_m"] is not None]
     reach_none = zone_reach(sims["none"], targets)
     reach_all = zone_reach(sims["all"], targets)
     for i, row in enumerate(range(STAGE_FIRST_ROW, STAGE_FIRST_ROW + len(targets))):
