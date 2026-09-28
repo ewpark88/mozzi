@@ -32,7 +32,9 @@ try {
         $v = $e.value
         if ($v -is [int] -or $v -is [long] -or $v -is [decimal]) { $v = [double]$v }
         $range = $ws.Range($e.cell)
-        [void]$range.GetType().InvokeMember('Value2', [System.Reflection.BindingFlags]::SetProperty, $null, $range, @($v))
+        # "=" 로 시작하는 문자열은 수식으로 넣는다 (Formula 속성)
+        $prop = if ($v -is [string] -and $v.StartsWith('=')) { 'Formula' } else { 'Value2' }
+        [void]$range.GetType().InvokeMember($prop, [System.Reflection.BindingFlags]::SetProperty, $null, $range, @($v))
     }
     $excel.CalculateFull()
     $wb.Save()

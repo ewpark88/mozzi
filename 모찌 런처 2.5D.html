@@ -65,7 +65,7 @@ canvas#game:active{cursor:grabbing}
 <div class="wrap">
   <header>
     <h1>모찌 런처 2.5D 샘플</h1>
-    <p class="lead">게임은 2D 그대로 두고 조명, 그림자, 광택, 털, 원근만 더한 2.5D 버전입니다. 아래 그래픽 버튼으로 2D와 바로 비교할 수 있습니다. 이미지와 사운드 파일 없이 전부 코드로 그렸습니다.</p>
+    <p class="lead">게임은 2D 측면 시점 그대로 두고 조명, 그림자, 광택, 털, 원근을 더한 2.5D 프로토타입입니다. 이미지와 사운드 파일 없이 전부 코드로 그렸습니다.</p>
   </header>
 
   <div class="stage" id="stage">
@@ -79,6 +79,7 @@ canvas#game:active{cursor:grabbing}
       <div class="tr">
         <button class="btn" id="muteBtn" type="button" aria-pressed="false">소리 켜짐</button>
       </div>
+      <div class="hint" id="errBox" hidden style="bottom:auto;top:52px;background:rgba(179,38,30,.9)"></div>
       <div class="hint" id="hint">화면 아무 곳이나 누른 채 뒤로 끌었다가 놓으세요</div>
       <div class="result" id="result" hidden>
         <div class="card">
@@ -92,11 +93,6 @@ canvas#game:active{cursor:grabbing}
   </div>
 
   <div class="controls">
-    <div class="group" role="group" aria-label="그래픽 모드">
-      <span class="lab">그래픽</span>
-      <button class="opt" type="button" data-mode="2d" aria-pressed="false">2D</button>
-      <button class="opt" type="button" data-mode="25d" aria-pressed="true">2.5D</button>
-    </div>
     <div class="group" role="group" aria-label="조명">
       <span class="lab">조명</span>
       <button class="opt" type="button" data-light="day" aria-pressed="true">낮</button>
@@ -127,7 +123,7 @@ canvas#game:active{cursor:grabbing}
       <h3>조작</h3>
       <ul>
         <li>누른 채 뒤로 끌기: 모찌가 늘어나며 힘이 모임</li>
-        <li>게이지 바늘이 가운데 [ ]에 가까울 때 놓을수록 멀리 날아감 (정중앙 PERFECT +15%)</li>
+        <li>게이지 바늘이 가운데 초록 구간에 가까울 때 놓을수록 멀리 날아감 (진초록 PERFECT +15%, 연두 GREAT, 노랑 GOOD)</li>
         <li>세게 당길수록 바늘이 빨라짐. 100%를 넘기면 최대 110%까지 힘이 늘지만 빨간 경고와 함께 바늘이 훨씬 빨라짐</li>
         <li>비행 중 누르고 있기: 부스터 (연료 1.5초)</li>
         <li>트램펄린과 풍선: 다시 튀어 오름, 씨앗: 볼이 빵빵해짐</li>
@@ -158,14 +154,22 @@ canvas#game:active{cursor:grabbing}
   let skinKey = 'mochi', acc = 'none', MODE25 = true, LIGHT = 'day', RIM = '#BFE6F5';
 
   // ---------- 캐릭터 그리기 (중심 기준, 반지름 약 40) ----------
-  function ellipse(c, x, y, rx, ry, rot=0){ c.beginPath(); c.ellipse(x, y, rx, ry, rot, 0, Math.PI*2); }
+  function ellipse(c, x, y, rx, ry, rot=0){ c.beginPath(); c.ellipse(x, y, Math.abs(rx), Math.abs(ry), rot, 0, Math.PI*2); }
   // ---------- 색 도우미 ----------
   function hx(h){ const n=parseInt(h.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
   function lit(h, k){ const [r,g,b]=hx(h); return k>=0 ? `rgb(${r+(255-r)*k|0},${g+(255-g)*k|0},${b+(255-b)*k|0})` : `rgb(${r*(1+k)|0},${g*(1+k)|0},${b*(1+k)|0})`; }
-  function rgba(h, a){ const [r,g,b]=hx(h); return `rgba(${r},${g},${b},${a})`; }
-  function radial(c, x0,y0,r0, x1,y1,r1, stops){ const g=c.createRadialGradient(x0,y0,r0,x1,y1,r1); stops.forEach(s=>g.addColorStop(s[0],s[1])); return g; }
-  function softSpot(c, x, y, rx, ry, color, a, rot=0){ c.save(); c.translate(x,y); c.rotate(rot); c.scale(1, ry/rx); c.fillStyle = radial(c,0,0,0,0,0,rx,[[0,rgba(color,a)],[1,rgba(color,0)]]); c.beginPath(); c.arc(0,0,rx,0,Math.PI*2); c.fill(); c.restore(); }
+  function rgba(h, a){ const [r,g,b]=hx(h); a = Math.min(1, Math.max(0, +a || 0)); return `rgba(${r},${g},${b},${a.toFixed(3)})`; }
+  function radial(c, x0,y0,r0, x1,y1,r1, stops){ const g=c.createRadialGradient(x0,y0,Math.max(0,r0),x1,y1,Math.max(.01,r1)); stops.forEach(s=>g.addColorStop(s[0],s[1])); return g; }
+  function softSpot(c, x, y, rx, ry, color, a, rot=0){ rx = Math.max(.5, rx); ry = Math.max(.5, ry); c.save(); c.translate(x,y); c.rotate(rot); c.scale(1, ry/rx); c.fillStyle = radial(c,0,0,0,0,0,rx,[[0,rgba(color,a)],[1,rgba(color,0)]]); c.beginPath(); c.arc(0,0,rx,0,Math.PI*2); c.fill(); c.restore(); }
 
+  let lastErr = null;
+  function reportErr(e){ if (lastErr) return; lastErr = e; try { const h = document.getElementById('errBox'); h.hidden = false; h.textContent = '그리기 오류: ' + (e && e.message ? e.message : e) + ' — 이 문구를 알려주세요'; } catch(_){} }
+  function drawChar(c, o){
+    c.save();
+    try { drawMochi(c, o); }
+    catch(e){ reportErr(e); c.restore(); c.save(); const m = MODE25; MODE25 = false; try { drawMochi(c, o); } catch(_){} MODE25 = m; }
+    c.restore();
+  }
   function drawMochi(c, o){
     const S = SKINS[o.skin || skinKey];
     const expr = o.expr || 'idle', t = o.t || 0, fly = o.pose === 'fly';
@@ -713,56 +717,66 @@ canvas#game:active{cursor:grabbing}
       c.strokeStyle = SKINS[skinKey].line; c.lineWidth = 3;
       c.translate(cx + (S.power > 1 ? Math.sin(S.t*80)*2 : 0), cy); c.rotate(a); c.scale(sx, sy); c.rotate(-a);
       c.rotate(Math.atan2(-d.y, -d.x) * .25);
-      drawMochi(c, {expr:S.expr, t:S.t, blink:false, cheek:S.cheek});
+      drawChar(c, {expr:S.expr, t:S.t, blink:false, cheek:S.cheek});
     } else {
       const sp = Math.hypot(S.vx, S.vy), fly = S.state === 'flight';
       c.translate(S.x, S.y + (S.state!=='flight' ? RAD*S.sq*.9 : 0));
       if (fly && sp > 50){ const a = Math.atan2(S.vy, S.vx), st = Math.min(.28, sp/4200); c.rotate(a); c.scale(1+st, 1-st*.7); c.rotate(-a); }
       c.scale(1 + S.sq, 1 - S.sq*.85 + breath);
       c.rotate(S.rot);
-      drawMochi(c, {expr:S.expr, t:S.t, blink:S.blink && (S.expr==='idle'), cheek:S.cheek, pose: fly ? 'fly' : 'stand'});
+      drawChar(c, {expr:S.expr, t:S.t, blink:S.blink && (S.expr==='idle'), cheek:S.cheek, pose: fly ? 'fly' : 'stand'});
     }
     c.restore();
   }
+  // 판정 구간 (가운데에서 벗어난 정도 off 기준): PERFECT ≤ .1 < GREAT ≤ .3 < GOOD ≤ .6 < 아쉬워요
+  const BANDS = [
+    {name:'아쉬워요', max:1,   col:'#E6D9CB', dk:'#A08C78'},
+    {name:'GOOD',     max:.6,  col:'#FFD35C', dk:'#C98F00'},
+    {name:'GREAT',    max:.3,  col:'#93D96A', dk:'#3E9A2A'},
+    {name:'PERFECT',  max:.1,  col:'#1FBF63', dk:'#0E7A3C'}
+  ];
+  function bandOf(off){ let b = BANDS[0]; BANDS.forEach(x => { if (off <= x.max) b = x; }); return b; }
   function drawGauge(c){
-    const pw = S.power, over = pw > 1, w = 200, h = 18, x = ANCHOR.x - w/2 + 20, y = -190;
+    const pw = S.power, over = pw > 1, w = 220, h = 20, x = ANCHOR.x - w/2 + 20, y = -200;
     const shake = over ? Math.sin(S.t*70)*1.6*(pw-1)/.1 : 0;
     c.save(); c.translate(shake, 0);
     // 판
-    c.fillStyle = over ? 'rgba(255,236,236,.97)' : 'rgba(255,248,236,.97)'; c.strokeStyle = over ? '#D93025' : '#6B4A2F'; c.lineWidth = 2.5;
-    roundRect(c, x-10, y-30, w+20, h+54, 12); c.fill(); c.stroke();
-    // 트랙 ----------[ ]----------
-    const tg = c.createLinearGradient(x,0,x+w,0);
-    if (over){ tg.addColorStop(0,'#F7B3AE'); tg.addColorStop(.5,'#FFE1DE'); tg.addColorStop(1,'#F7B3AE'); }
-    else { tg.addColorStop(0,'#FFD6A5'); tg.addColorStop(.5,'#E6F7D9'); tg.addColorStop(1,'#FFD6A5'); }
-    c.fillStyle = tg; roundRect(c, x, y, w, h, 9); c.fill();
-    c.strokeStyle = over ? '#D93025' : '#B98B57'; c.lineWidth = 1.5; roundRect(c, x, y, w, h, 9); c.stroke();
-    c.strokeStyle = over ? 'rgba(217,48,37,.45)' : 'rgba(107,74,47,.35)'; c.lineWidth = 1;
-    for (let i=1;i<10;i++){ const tx = x + w*i/10; c.beginPath(); c.moveTo(tx, y+h-5); c.lineTo(tx, y+h-1); c.stroke(); }
-    // 목표 [ ]
-    const zx = x + w*(.5 - ZONE/2), zw = w*ZONE;
-    c.fillStyle = over ? 'rgba(255,120,110,.35)' : 'rgba(87,184,74,.35)'; c.fillRect(zx, y+1, zw, h-2);
-    c.strokeStyle = over ? '#B3261E' : '#2E8B3E'; c.lineWidth = 3;
-    c.beginPath(); c.moveTo(zx+5, y-4); c.lineTo(zx, y-4); c.lineTo(zx, y+h+4); c.lineTo(zx+5, y+h+4); c.stroke();
-    c.beginPath(); c.moveTo(zx+zw-5, y-4); c.lineTo(zx+zw, y-4); c.lineTo(zx+zw, y+h+4); c.lineTo(zx+zw-5, y+h+4); c.stroke();
+    c.fillStyle = over ? 'rgba(255,236,236,.97)' : 'rgba(255,248,236,.97)'; c.strokeStyle = over ? '#D93025' : '#6B4A2F'; c.lineWidth = over ? 3 : 2.5;
+    roundRect(c, x-12, y-32, w+24, h+72, 12); c.fill(); c.stroke();
+    // 트랙: 가운데로 갈수록 좋은 구간 (색으로 구분)
+    c.save(); roundRect(c, x, y, w, h, 10); c.clip();
+    BANDS.forEach(b => { const half = w/2*b.max; c.fillStyle = b.col; c.fillRect(x + w/2 - half, y, half*2, h); });
+    // PERFECT 반짝임
+    const pz = w/2*BANDS[3].max, shine = (Math.sin(S.t*6)+1)/2;
+    c.fillStyle = `rgba(255,255,255,${.25+.35*shine})`; c.fillRect(x + w/2 - pz, y+2, pz*2, 5);
+    // 구간 경계선
+    c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 1.5;
+    BANDS.slice(1).forEach(b => { const half = w/2*b.max; [x+w/2-half, x+w/2+half].forEach(bx => { c.beginPath(); c.moveTo(bx, y); c.lineTo(bx, y+h); c.stroke(); }); });
+    if (over){ c.fillStyle = `rgba(217,48,37,${.18 + .14*(Math.sin(S.t*20)>0)})`; c.fillRect(x, y, w, h); }
+    c.restore();
+    c.strokeStyle = over ? '#D93025' : '#8A6A4A'; c.lineWidth = 1.5; roundRect(c, x, y, w, h, 10); c.stroke();
     // 바늘 |
-    const nx = x + w*S.needle, off = Math.abs(S.needle-.5)/.5;
-    const nc = over ? '#D93025' : (off <= ZONE ? '#1FA34A' : off < .3 ? '#7CC242' : off < .6 ? '#F2A516' : '#E8762C');
-    c.fillStyle = nc; c.strokeStyle = '#FFFFFF'; c.lineWidth = 1.5;
-    roundRect(c, nx-3, y-7, 6, h+14, 3); c.fill(); c.stroke();
-    c.beginPath(); c.moveTo(nx-6, y-11); c.lineTo(nx+6, y-11); c.lineTo(nx, y-4); c.closePath(); c.fill();
+    const nx = x + w*S.needle, off = Math.abs(S.needle-.5)/.5, band = bandOf(off);
+    c.fillStyle = over ? '#D93025' : band.dk; c.strokeStyle = '#FFFFFF'; c.lineWidth = 2;
+    roundRect(c, nx-3.5, y-8, 7, h+16, 3.5); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(nx-7, y-13); c.lineTo(nx+7, y-13); c.lineTo(nx, y-5); c.closePath(); c.fill();
+    // 바늘 위 현재 판정
+    c.textAlign='center'; c.textBaseline='middle'; c.font='12px Jua, sans-serif'; c.fillStyle = over ? '#D93025' : band.dk;
     // 힘 바 (0~110%, 100% 표시)
-    const py = y + h + 10, pwW = w;
-    c.fillStyle = 'rgba(0,0,0,.08)'; roundRect(c, x, py, pwW, 7, 3.5); c.fill();
-    const p100 = pwW/MAXPOW, fill = pwW*pw/MAXPOW;
+    const py = y + h + 12;
+    c.fillStyle = 'rgba(0,0,0,.08)'; roundRect(c, x, py, w, 7, 3.5); c.fill();
+    const p100 = w/MAXPOW, fill = w*pw/MAXPOW;
     const pg = c.createLinearGradient(x,0,x+p100,0); pg.addColorStop(0,'#FFD36B'); pg.addColorStop(1,'#34C06A');
     c.fillStyle = pg; roundRect(c, x, py, Math.min(fill, p100), 7, 3.5); c.fill();
     if (over){ c.fillStyle = (Math.sin(S.t*20) > 0) ? '#FF3B30' : '#B3261E'; c.fillRect(x+p100, py, fill-p100, 7); }
     c.strokeStyle = '#6B4A2F'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x+p100, py-3); c.lineTo(x+p100, py+10); c.stroke();
-    // 글자
-    c.textAlign='center'; c.textBaseline='middle'; c.font='15px Jua, sans-serif';
-    c.fillStyle = over ? '#D93025' : '#3B2A1C';
-    c.fillText(over ? '힘 ' + Math.round(pw*100) + '%  과충전!' : '힘 ' + Math.round(pw*100) + '%  [ ]에 맞춰 놓기', x + w/2, y - 18);
+    // 범례
+    const ly = py + 22, items = [['PERFECT ×1.15', BANDS[3]], ['GREAT', BANDS[2]], ['GOOD', BANDS[1]]];
+    c.font = '11.5px Jua, sans-serif'; c.textAlign = 'left';
+    let lx = x; items.forEach(([t, b]) => { c.fillStyle = b.col; c.strokeStyle = b.dk; c.lineWidth = 1; roundRect(c, lx, ly-5, 12, 10, 3); c.fill(); c.stroke(); c.fillStyle = '#3B2A1C'; c.fillText(t, lx+16, ly); lx += 16 + c.measureText(t).width + 9; });
+    // 제목
+    c.textAlign='center'; c.font='15px Jua, sans-serif'; c.fillStyle = over ? '#D93025' : '#3B2A1C';
+    c.fillText(over ? '힘 ' + Math.round(pw*100) + '%  과충전!' : '힘 ' + Math.round(pw*100) + '%  초록 구간에 맞춰 놓기', x + w/2, y - 20);
     c.restore();
   }
   function drawFuel(){
@@ -778,9 +792,12 @@ canvas#game:active{cursor:grabbing}
   let last = performance.now();
   function frame(now){
     const dt = Math.min(1/30, (now-last)/1000); last = now;
-    step(dt);
-    ctx.setTransform(scale*dpr, 0, 0, scale*dpr, 0, 0);
-    drawBg(); drawWorld(); drawFuel();
+    try {
+      step(dt);
+      ctx.setTransform(scale*dpr, 0, 0, scale*dpr, 0, 0);
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      drawBg(); drawWorld(); drawFuel();
+    } catch(e){ reportErr(e); }
     requestAnimationFrame(frame);
   }
   reset(); requestAnimationFrame(frame);
@@ -809,7 +826,7 @@ canvas#game:active{cursor:grabbing}
       let sx = 1, sy = 1;
       if (k==='flat'){ sx = 1.18; sy = .76; } if (k==='tense'){ sx = 1.12; sy = .9; } if (k==='joy'){ sx=.92; sy=1.1; }
       c.translate(110, 118 + (k==='flat'?10:0)); c.scale(1.9*sx, 1.9*(sy+bob));
-      drawMochi(c, {expr:k, t, cheek: k==='puff' ? 1.4 : 1, pose: k==='joy' ? 'fly' : 'stand', blink:false});
+      drawChar(c, {expr:k, t, cheek: k==='puff' ? 1.4 : 1, pose: k==='joy' ? 'fly' : 'stand', blink:false});
     });
   }
   let st0 = performance.now();

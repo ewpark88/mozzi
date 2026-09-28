@@ -61,6 +61,8 @@ class BalanceConfig {
     required this.boostDistanceK,
     required this.seedsPerM,
     required this.runDurationSec,
+    required this.simTimeScale,
+    required this.cameraBasePxPerM,
     required List<ZoneSpec> zones,
   }) : upgrades = Map.unmodifiable(upgrades),
        zones = List.unmodifiable(zones) {
@@ -83,6 +85,8 @@ class BalanceConfig {
       boostDistanceK: r.number('phys_boost_k'),
       seedsPerM: r.number('coin_per_m'),
       runDurationSec: r.number('run_sec'),
+      simTimeScale: r.number('sim_time_scale'),
+      cameraBasePxPerM: r.number('cam_base_px_per_m'),
       zones: r.objectList('zones').map(ZoneSpec.fromJson).toList(),
     );
   }
@@ -103,6 +107,13 @@ class BalanceConfig {
 
   /// `run_sec` 1판 평균 시간 (초, 페이싱 환산용).
   final double runDurationSec;
+
+  /// `sim_time_scale` 시뮬 재생 배율. 시뮬은 실제 미터·중력으로 계산하고 이 배율로
+  /// 빨리 재생해 2.5D 샘플과 같은 체감을 낸다 (ADR-012).
+  final double simTimeScale;
+
+  /// `cam_base_px_per_m` 가상 화면(높이 540) 기준 Lv0 카메라 배율 (px/m).
+  final double cameraBasePxPerM;
 
   /// 구역 목록 (시작 거리 오름차순).
   final List<ZoneSpec> zones;

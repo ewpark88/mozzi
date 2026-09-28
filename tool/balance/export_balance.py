@@ -27,7 +27,10 @@ OUT = ROOT / "assets" / "config" / "balance_defaults.json"
 FIXTURE = ROOT / "test" / "fixtures" / "balance_sheet_expected.json"
 
 UPGRADE_KEYS = ["upg_launch", "upg_aero", "upg_boost", "upg_bounce", "upg_coin"]
-PHYS_KEYS = ["phys_v0", "phys_g", "phys_boost_k", "coin_per_m", "run_sec"]
+PHYS_KEYS = [
+    "phys_v0", "phys_g", "phys_boost_k", "coin_per_m", "run_sec",
+    "feel_ref_v_px", "feel_ref_g_px", "sim_time_scale", "cam_base_px_per_m",
+]
 
 
 def _num(v):

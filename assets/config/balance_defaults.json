@@ -30,6 +30,10 @@
   "phys_boost_k": 20,
   "coin_per_m": 0.5,
   "run_sec": 40,
+  "feel_ref_v_px": 1300,
+  "feel_ref_g_px": 1400,
+  "sim_time_scale": 1.6484,
+  "cam_base_px_per_m": 52.576,
   "zones": [
     {
       "id": 1,

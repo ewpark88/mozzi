@@ -60,6 +60,7 @@ lib/
   game/
     mozzi_game.dart         # FlameGame: 시뮬 tick → 컴포넌트 동기화
     components/             # MozziComponent, GroundComponent, ObjectComponent…
+    viewport/               # 가로 고정 반응형 가상 화면 (높이 540, ADR-011)
     render/                 # 2.5D 코드 렌더링: 파츠 레이어, 셰이딩 7단계, 조명, 캐싱 (GDD §3 2.5D 아트 디렉션)
     camera/ parallax/ input/ effects/
 shaders/                    # FragmentShader(.frag) — pubspec flutter.shaders 에 등록

@@ -42,7 +42,8 @@
 ## 6. UI(Flutter) 코드
 - 화면 로직은 `<feature>_controller.dart`(Notifier)에 두고, 위젯은 상태 표시와 이벤트 전달만 한다.
 - 문자열은 P7 이전까지 `ui/strings.dart` 한 곳에 모은다 (이후 l10n 전환). 위젯에 문자열 리터럴 산재 금지.
-- 색상·간격·글꼴은 `app/theme`에서 가져온다. GDD 캐릭터 컬러(#FFE8C7 등)는 테마 상수로 한 번만 정의.
+- GDD 캐릭터 컬러(#FFE8C7 등)·월드 색은 `lib/game/render/palette.dart` 한 곳에만 정의한다 (game·ui 공용, app 은 game 을 통해 사용).
+- 크기는 반응형: 게임은 가상 높이 540 좌표, Flutter HUD 는 `hudScaleOf()` 배율을 곱한다. 고정 px 레이아웃 금지 (ADR-011).
 
 ## 7. 에러 처리·로그
 - 예상 가능한 실패(광고 미로드, 결제 취소, 네트워크)는 예외 대신 `Result`/상태로 돌려준다.
