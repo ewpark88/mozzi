@@ -25,4 +25,9 @@ fi
 step "5/5 test"
 flutter test
 
+step "info: spec sync (경고만)"
+if command -v python >/dev/null 2>&1 && python -c "import openpyxl" 2>/dev/null; then
+  PYTHONIOENCODING=utf-8 python tool/spec/spec_sync.py || true
+fi
+
 printf '\nverify PASSED\n'

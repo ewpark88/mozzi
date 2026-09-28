@@ -19,8 +19,8 @@
 ## ADR-003 외부 서비스는 인터페이스 + Fake 우선
 - 날짜: 2026-09-28 · 상태: 채택
 - 맥락: Firebase·AdMob 계정 미준비.
-- 결정: domain/services 에 인터페이스, data/fake 에 Fake 를 먼저 만들고 P8 에서 실제 구현을 추가한다. `config/*.json`의 `USE_FAKE_SERVICES`로 선택.
-- 결과: 코어 개발이 외부 준비에 막히지 않음. P8 에서 계약 테스트로 실제 구현 검증 필요.
+- 결정: domain/services 에 인터페이스, data/fake 에 Fake 를 먼저 만들고 P9 에서 실제 구현을 추가한다. `config/*.json`의 `USE_FAKE_SERVICES`로 선택.
+- 결과: 코어 개발이 외부 준비에 막히지 않음. P9 에서 계약 테스트로 실제 구현 검증 필요.
 
 ## ADR-004 밸런스 단일 원본 = 엑셀
 - 날짜: 2026-09-28 · 상태: 채택
@@ -35,6 +35,30 @@
 ## ADR-006 린트 very_good_analysis + strict 모드
 - 날짜: 2026-09-28 · 상태: 채택
 - 결정: very_good_analysis 기반, `strict-casts/inference/raw-types`, verify 에서 info 도 실패 처리. 한국어 주석 때문에 `lines_longer_than_80_chars`, 문서 강제 `public_member_api_docs`는 끔(도메인 문서화는 리뷰로 확인).
+
+## ADR-008 페이싱 시뮬 규칙 명세 (밸런스 시트 「진행 시뮬」 역산)
+- 날짜: 2026-09-28 · 상태: 채택
+- 맥락: 시트의 진행 시뮬은 결과값만 있고 규칙이 없었다. P1 에서 규칙을 역산해 300판 × 3시나리오 전 셀 일치를 확인했다.
+- 결정:
+  - 판당 씨앗 = `d × coin_per_m × (1 + coin·Lv) × 광고배율`, 시뮬 내부는 소수 누적(표시만 반올림)
+  - 판 종료마다 “씨앗 1개당 판당 씨앗 증가량” 최대 업그레이드를 반복 구매, 최선 항목이 부족하면 그 판 구매 종료(차선 구매 없음)
+  - 비용 반올림은 사사오입(Excel ROUND = Dart `round()`). 시트 원본 시뮬은 은행가 반올림이었으나 결과 차이 없음(.5 비용은 고무줄 Lv1, 바운스 Lv2 뿐)
+  - 광고 30% 시나리오 = 매판 ×1.3 기대값 모델
+  - 기준 구현 2개: `tool/balance/pacing_sim.py`(시트 생성기), `lib/domain/balance/pacing_simulator.dart`(게임). 둘 다 fixture 로 시트와 비교
+- 결과: 설정값을 바꾸면 스크립트로 시트를 재생성할 수 있고, 게임 코드와 시트가 어긋나면 테스트가 실패한다.
+- 게임 내 실제 지갑은 정수(판마다 번 씨앗을 반올림해 적립) — 소수 누적은 시뮬 전용.
+
+## ADR-009 2.5D 코드 렌더링, 외부 에셋 없음 (GDD 2026-09-28 개정 반영)
+- 날짜: 2026-09-28 · 상태: 채택
+- 맥락: GDD 가 “2D 게임플레이 + 2.5D 입체 셰이딩, 외주·유료 에셋 없이 전부 코드로 제작, Rive 대신 Flame 코드 애니메이션”으로 개정됨.
+- 결정: 캐릭터·오브젝트·배경·이펙트를 `lib/game/render/`(파츠 레이어 + 셰이딩) 와 `shaders/*.frag`(FragmentShader)로 만든다. Rive 미사용. 효과음은 코드 합성, 폰트는 OFL(Jua, Gowun Dodum 등).
+- 결과: 에셋 비용 0, 스킨은 색·재질 값만 추가. 대신 렌더링 품질 반복 개선과 저사양 성능(캐싱, 저사양 모드) 작업이 필요하다 → DEV_PLAN P2·P7 반영.
+
+## ADR-010 `meta` 패키지 직접 의존 (domain 불변 클래스 표시)
+- 날짜: 2026-09-28 · 상태: 채택
+- 맥락: 값 비교(==)가 필요한 도메인 모델에 `@immutable` 표시가 필요하다 (린트 avoid_equals_and_hash_code_on_mutable_classes).
+- 결정: 순수 Dart 패키지 `meta` 를 직접 의존으로 추가. domain/core 에서 허용(순수 Dart).
+- 대안: flutter/foundation 의 `@immutable` — domain 은 flutter import 금지라 불가.
 
 ## ADR-007 Android applicationId `com.repo.mozzi`, flavor dev/prod
 - 날짜: 2026-09-28 · 상태: 채택

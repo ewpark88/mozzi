@@ -25,7 +25,7 @@ scope: app | core | balance | sim | world | economy | progress | data | game | u
 `pubspec.yaml`의 `version: MAJOR.MINOR.PATCH+BUILD`
 | 구간 | 버전 | 예 |
 |---|---|---|
-| P0~P9 개발(MVP) | `0.<Phase>.PATCH` | P3 완료 = `0.3.0` |
+| P0~P10 개발(MVP) | `0.<Phase>.PATCH` | P3 완료 = `0.3.0` |
 | MVP 소프트런칭 | `0.9.x` | |
 | 정식 출시 | `1.0.0` | 이후 GDD 로드맵: 1.1 / 1.2 |
 | 핫픽스 | PATCH +1 | `1.0.1` |
@@ -75,7 +75,7 @@ flutter build appbundle --flavor prod --release -t lib/main_prod.dart \
 2. 체크리스트(§8) 확인 → main 머지.
 3. `git tag vX.Y.Z && git push origin vX.Y.Z` (사용자 승인 후)
 4. CI 가 verify → 태그/버전 일치 검사 → 서명된 prod AAB + 난독화 심볼 아티팩트 생성.
-5. (P9 이후) 자동으로 Play Console **internal** 트랙 업로드.
+5. (P10 이후) 자동으로 Play Console **internal** 트랙 업로드.
 6. 트랙 승격: internal → closed(소프트런칭) → production 단계적 출시 10% → 50% → 100% (각 단계 최소 24시간, 크래시율 확인).
 
 ## 8. 출시 체크리스트

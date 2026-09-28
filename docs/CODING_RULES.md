@@ -62,13 +62,27 @@
 
 ## 9. 의존성
 - 새 패키지는 `docs/DECISIONS.md`에 사유·대안을 적은 뒤 `flutter pub add`로 추가한다.
-- Phase 에 필요할 때만 추가한다 (예: Firebase·AdMob 은 P8).
+- Phase 에 필요할 때만 추가한다 (예: Firebase·AdMob 은 P9).
 - 버전은 caret(`^`)으로 두고 `pubspec.lock`은 커밋한다.
 
-## 10. 보호 파일 (Claude 훅이 수정을 차단)
-- 기획 원본: `모찌 런처 게임 기획서 (GDD).md`, `모찌런처_밸런스시트.xlsx` → 사용자만 수정
-- 생성 파일: `assets/config/balance_defaults.json`(스크립트로 생성), `*.g.dart`, `build/`
+## 10. 보호 파일과 기준 문서 수정 절차
+**훅이 수정을 차단하는 파일**
+- 생성 파일: `assets/config/balance_defaults.json`, `test/fixtures/balance_sheet_expected.json`(둘 다 `export_balance.py`로 생성), `*.g.dart`, `build/`
 - 비밀: `key.properties`, `*.jks`, `*.keystore`, `google-services.json`, `GoogleService-Info.plist`
+
+**기준 문서(GDD·밸런스 시트) — 오류 정정 시에만 수정**
+- 모든 구현은 GDD 와 밸런스 시트를 근거로 한다. 코드 주석·테스트 이름·PR 설명에 참조 절을 남긴다.
+- 문서 오류(계산 오류, 문서 간 불일치, 누락된 규칙, 오탈자)를 발견하면 코드로 우회하지 않고 문서를 함께 고친다.
+- GDD(.md): 직접 편집. 변경한 절만 최소로 고친다.
+- 밸런스 시트(.xlsx): **Excel COM 으로 편집·재계산·저장**한다 (`tool/balance/xlsx_edit.ps1`, P1 에서 추가).
+  openpyxl 로 저장하면 수식 결과(캐시 값)가 사라져 export 가 깨지므로 openpyxl 은 읽기 전용으로만 쓴다.
+  「진행 시뮬」처럼 Python 결과값이 붙여 넣어진 시트는 `tool/balance/pacing_sim.py`로 재생성해 반영한다.
+- 수정 후: `export_balance.py` 실행 → verify → `docs/SPEC_CHANGELOG.md`에 기록(날짜, 문서·위치, 변경 전/후, 근거).
+- 기획 의도(재미·수익 방향)가 바뀌는 수정은 먼저 사용자 승인을 받는다.
+
+**기준 문서 변경 추적** — `tool/spec/spec_sync.py`
+- `docs/spec_snapshot/` = 마지막으로 개발에 반영한 GDD·시트. 현재 문서와 비교해 바뀐 절/셀을 보여준다.
+- 반영 절차는 `/spec-sync`. 반영 전에는 `--mark` 하지 않는다 (알림이 사라지므로).
 
 ## 11. 완료의 정의 (모든 작업 공통)
 1. `bash tool/verify.sh` 통과 (format → analyze(info 도 실패) → architecture → balance sync → test)

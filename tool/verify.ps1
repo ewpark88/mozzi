@@ -19,5 +19,8 @@ Step '4/5 balance sync' {
     else { Write-Host 'skip (python/openpyxl 없음)'; $global:LASTEXITCODE = 0 }
 }
 Step '5/5 test' { flutter test }
+Write-Host "`n== info: spec sync =="
+python tool/spec/spec_sync.py
+$global:LASTEXITCODE = 0
 
 Write-Host "`nverify PASSED"

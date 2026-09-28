@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mozzi/app/bootstrap.dart';
+import 'package:mozzi/app/providers.dart';
 
 /// 앱 루트 위젯. 라우팅·테마는 P6에서 확장한다 (docs/DEV_PLAN.md).
 class MozziApp extends ConsumerWidget {

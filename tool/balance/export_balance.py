@@ -1,10 +1,12 @@
-"""밸런스 시트(xlsx) → assets/config/balance_defaults.json 변환.
+"""밸런스 시트(xlsx) → 앱 설정 JSON + 테스트 fixture 변환.
 
 엑셀이 밸런스 값의 단일 원본이다. 값을 바꿀 때는 엑셀을 고친 뒤 이 스크립트를 실행한다.
-JSON 키는 Firebase Remote Config 키와 1:1로 맞춘다 (GDD §10).
+  - assets/config/balance_defaults.json : 「설정」 시트. 키 = Firebase Remote Config 키 (GDD §10)
+  - test/fixtures/balance_sheet_expected.json : 「업그레이드표」·「진행 시뮬」 결과값.
+    게임 도메인 코드가 시트와 같은 결과를 내는지 테스트가 이 파일로 검증한다 (ADR-008).
 
 사용법:  python tool/balance/export_balance.py [--check]
-  --check : JSON이 엑셀과 다르면 exit 1 (CI/verify 용, 파일 수정 안 함)
+  --check : 생성 파일이 엑셀과 다르면 exit 1 (CI/verify 용, 파일 수정 안 함)
 필요 패키지: openpyxl
 """
 
@@ -14,9 +16,15 @@ from pathlib import Path
 
 import openpyxl
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sheet_layout import (  # noqa: E402
+    STAGE_COUNT, STAGE_FIRST_ROW, STAGE_SHEET, STAR2_ROW, UNLOCK_FIRST_ROW, UNLOCK_WORLDS,
+)
+
 ROOT = Path(__file__).resolve().parents[2]
 XLSX = ROOT / "모찌런처_밸런스시트.xlsx"
 OUT = ROOT / "assets" / "config" / "balance_defaults.json"
+FIXTURE = ROOT / "test" / "fixtures" / "balance_sheet_expected.json"
 
 UPGRADE_KEYS = ["upg_launch", "upg_aero", "upg_boost", "upg_bounce", "upg_coin"]
 PHYS_KEYS = ["phys_v0", "phys_g", "phys_boost_k", "coin_per_m", "run_sec"]
@@ -28,8 +36,8 @@ def _num(v):
     return v
 
 
-def build() -> dict:
-    ws = openpyxl.load_workbook(XLSX, data_only=True)["설정"]
+def build(wb) -> dict:
+    ws = wb["설정"]
     rows = [r for r in ws.iter_rows(values_only=True)]
     upgrades, phys, zones = {}, {}, []
     zone_section = False
@@ -59,21 +67,106 @@ def build() -> dict:
     ]
     if missing or len(zones) != 6:
         raise SystemExit(f"시트 파싱 실패: missing={missing}, zones={len(zones)}")
-    return {"_source": XLSX.name, **upgrades, **phys, "zones": zones}
+    return {"_source": XLSX.name, **upgrades, **phys, "zones": zones, **build_stages(wb)}
+
+
+def build_stages(wb) -> dict:
+    """「스테이지」 시트 입력값 (GDD §4 스테이지 구조)."""
+    ws = wb[STAGE_SHEET]
+    stages = []
+    for row in range(STAGE_FIRST_ROW, STAGE_FIRST_ROW + STAGE_COUNT):
+        stages.append({
+            "world": _num(ws[f"A{row}"].value),
+            "stage": _num(ws[f"B{row}"].value),
+            "target_m": _num(ws[f"C{row}"].value),
+            "boss": ws[f"D{row}"].value == "보스",
+        })
+    unlock = [
+        {"world": _num(ws[f"A{UNLOCK_FIRST_ROW + i}"].value),
+         "stars": _num(ws[f"C{UNLOCK_FIRST_ROW + i}"].value)}
+        for i in range(len(UNLOCK_WORLDS))
+    ]
+    if [u["world"] for u in unlock] != UNLOCK_WORLDS:
+        raise SystemExit(f"월드 해금 표 파싱 실패: {unlock}")
+    return {
+        "stages": stages,
+        "stage_star2_ratio": _num(ws[f"C{STAR2_ROW}"].value),
+        "world_unlock_stars": unlock,
+    }
+
+
+def build_fixture(wb) -> dict:
+    """「업그레이드표」 레벨별 값과 「진행 시뮬」 판별 결과를 그대로 옮긴다."""
+    upgrade_table = []
+    for r in wb["업그레이드표"].iter_rows(min_row=3, values_only=True):
+        if not isinstance(r[0], int):
+            continue
+        upgrade_table.append({
+            "lv": r[0],
+            "costs": [_num(v) for v in r[1:6]],  # launch, aero, boost, bounce, coin
+            "launch_speed": _num(r[6]),
+            "aero_mult": _num(r[7]),
+            "boost_m": _num(r[8]),
+            "bounce_mult": _num(r[9]),
+            "coin_mult": _num(r[10]),
+            "distance_all_same_lv": _num(r[11]),
+        })
+    ws = wb["진행 시뮬"]
+    runs = []
+    for r in ws.iter_rows(min_row=5, values_only=True):
+        if not isinstance(r[0], int):
+            continue
+        runs.append({
+            "run": r[0],
+            "distance": {"none": r[2], "ad30": r[3], "ad100": r[4]},
+            "seeds": {"none": r[5], "ad100": r[6]},
+            "levels_none": list(r[8:13]),
+        })
+    zone_reach = {"none": [], "ad30": [], "ad100": []}
+    for row in range(30, 36):
+        for col, key in zip("PQR", ["none", "ad30", "ad100"]):
+            zone_reach[key].append(ws[f"{col}{row}"].value)
+    ws = wb[STAGE_SHEET]
+    rows = range(STAGE_FIRST_ROW, STAGE_FIRST_ROW + STAGE_COUNT)
+    stage_reach = {
+        "target_m": [ws[f"C{r}"].value for r in rows],
+        "none": [ws[f"E{r}"].value for r in rows],
+        "ad100": [ws[f"G{r}"].value for r in rows],
+    }
+    return {
+        "_source": XLSX.name,
+        "stage_reach": stage_reach,
+        "upgrade_table": upgrade_table,
+        "pacing_runs": runs,
+        "zone_reach": zone_reach,
+    }
+
+
+def _dump(data: dict, compact: bool = False) -> str:
+    if compact:
+        return json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n"
+    return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
 
 
 def main() -> int:
-    data = build()
-    text = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+    wb = openpyxl.load_workbook(XLSX, data_only=True)
+    outputs = {
+        OUT: _dump(build(wb)),
+        FIXTURE: _dump(build_fixture(wb), compact=True),
+    }
     if "--check" in sys.argv:
-        current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
-        if current != text:
-            print("balance_defaults.json 이 엑셀과 다릅니다. export_balance.py 를 실행하세요.")
+        stale = [p for p, text in outputs.items()
+                 if not p.exists() or p.read_text(encoding="utf-8") != text]
+        for p in stale:
+            print(f"{p.relative_to(ROOT)} 이 엑셀과 다릅니다. export_balance.py 를 실행하세요.")
+        if stale:
             return 1
         print("balance OK")
         return 0
-    OUT.write_text(text, encoding="utf-8")
-    print(f"wrote {OUT.relative_to(ROOT)}")
+    for p, text in outputs.items():
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text, encoding="utf-8", newline="\n")
+        print(f"wrote {p.relative_to(ROOT)}")
     return 0
 
 

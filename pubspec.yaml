@@ -4,7 +4,7 @@ publish_to: 'none'
 
 # 버전 규칙: docs/BUILD_RELEASE.md §3 참조.
 # MAJOR.MINOR.PATCH+BUILD — MVP 기간은 0.x, BUILD는 스토어 업로드마다 +1.
-version: 0.0.1+1
+version: 0.1.0+2
 
 environment:
   sdk: ^3.12.0
@@ -17,6 +17,7 @@ dependencies:
   flutter_riverpod: ^3.4.3
   hive_ce: ^2.20.1
   hive_ce_flutter: ^2.4.0
+  meta: ^1.18.0
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,5 @@
 # 릴리즈 빌드: vX.Y.Z 태그 push 시 prod AAB 를 서명 빌드해 아티팩트로 올린다.
-# Play Console 업로드 단계는 P9 에서 활성화한다. 규칙: docs/BUILD_RELEASE.md §7
+# Play Console 업로드 단계는 P10 에서 활성화한다. 규칙: docs/BUILD_RELEASE.md §7
 #
 # 필요한 GitHub Secrets:
 #   ANDROID_KEYSTORE_BASE64  업로드 키스토어(.jks)를 base64 인코딩한 값

@@ -56,11 +56,13 @@ lib/
   data/
     save/hive_save_store.dart
     fake/                   # Fake 구현 모음 (개발·테스트 기본)
-    firebase/ ads/ iap/     # P8 에서 추가
+    firebase/ ads/ iap/     # P9 에서 추가
   game/
     mozzi_game.dart         # FlameGame: 시뮬 tick → 컴포넌트 동기화
     components/             # MozziComponent, GroundComponent, ObjectComponent…
-    camera/ parallax/ input/
+    render/                 # 2.5D 코드 렌더링: 파츠 레이어, 셰이딩 7단계, 조명, 캐싱 (GDD §3 2.5D 아트 디렉션)
+    camera/ parallax/ input/ effects/
+shaders/                    # FragmentShader(.frag) — pubspec flutter.shaders 에 등록
   ui/
     <feature>/              # home, hud, result, upgrade, shop…
       <feature>_screen.dart
@@ -89,13 +91,13 @@ lib/
 ## 6. 설정·밸런스 흐름
 ```
 모찌런처_밸런스시트.xlsx ──(tool/balance/export_balance.py)──▶ assets/config/balance_defaults.json
-    ──(앱 시작)──▶ BalanceConfig.fromJson ──(P8: Remote Config 값으로 덮어쓰기)──▶ 앱 전체
+    ──(앱 시작)──▶ BalanceConfig.fromJson ──(P9: Remote Config 값으로 덮어쓰기)──▶ 앱 전체
 ```
 - JSON 키 = Remote Config 키 (GDD §10). 키를 추가하면 엑셀 → 스크립트 → JSON 순서로 반영.
 - verify 4단계가 JSON 과 엑셀의 불일치를 잡는다.
 
 ## 7. 외부 서비스
-| 인터페이스 (domain/services) | Fake (data/fake) | 실제 (P8) |
+| 인터페이스 (domain/services) | Fake (data/fake) | 실제 (P9) |
 |---|---|---|
 | RemoteConfigService | 기본 JSON 그대로 | Firebase Remote Config |
 | AnalyticsService | 콘솔 로그 + 메모리 기록 | Firebase Analytics |

@@ -4,6 +4,7 @@ argument-hint: <Phase ID, 예: P1>
 ---
 Phase $ARGUMENTS 를 시작한다. 아래 순서를 반드시 지킨다.
 
+0. `PYTHONIOENCODING=utf-8 python tool/spec/spec_sync.py` 로 기준 문서 변경을 확인한다. 바뀌었으면 먼저 `/spec-sync` 절차로 반영한다.
 1. `docs/DEV_PLAN.md` 에서 $ARGUMENTS 섹션(목표, 작업 체크리스트, 산출물, DoD, GDD 참조 절)을 읽는다.
 2. 참조된 GDD 절(`모찌 런처 게임 기획서 (GDD).md`)과 필요 시 밸런스 시트 값을 확인한다.
 3. `docs/ARCHITECTURE.md`, `docs/CODING_RULES.md` 를 다시 확인하고, 이번 Phase에서 만들 파일을 레이어별로 나열한다.
