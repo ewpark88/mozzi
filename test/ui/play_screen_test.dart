@@ -99,4 +99,36 @@ void main() {
     expect(find.text(Strings.pullHint), findsOneWidget);
     expect(find.text(Strings.distance(0)), findsOneWidget);
   });
+
+  testWidgets('비행 중 탭하면 부스터 연료가 줄고, 조작 안내가 보인다', (tester) async {
+    await pumpPlay(tester, const Size(915, 412), dev: false);
+    final pull = await tester.startGesture(const Offset(450, 200));
+    await pull.moveBy(const Offset(-60, 60));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await pull.up();
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(find.textContaining(Strings.hintBoost), findsOneWidget);
+    double fuelFactor() => tester
+        .widget<FractionallySizedBox>(find.byType(FractionallySizedBox))
+        .widthFactor!;
+    expect(fuelFactor(), 1);
+    // 채움 막대가 실제로 그려지는 크기인지 (높이 0 으로 사라지지 않게)
+    final fill = tester.getSize(
+      find.descendant(
+        of: find.byType(FractionallySizedBox),
+        matching: find.byType(DecoratedBox),
+      ),
+    );
+    expect(fill.height, greaterThan(4));
+    expect(fill.width, greaterThan(50));
+    await tester.tapAt(const Offset(600, 150));
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(fuelFactor(), lessThan(1));
+  });
 }

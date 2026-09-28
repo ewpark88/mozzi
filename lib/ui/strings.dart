@@ -10,8 +10,12 @@ abstract final class Strings {
   static String devLaunch(String grade, double power, double mult) =>
       '$grade · 힘 ${(power * 100).round()}% · 거리 ×${mult.toStringAsFixed(3)}';
   static const retry = '다시 날리기';
+  static const fuel = '연료';
+  static const hintBoost = '탭: 부스터';
+  static const hintInflate = '꾹: 볼 부풀리기';
+  static const hintDive = '아래로 쓸기: 급강하';
   static String distance(double m) => '${m.toStringAsFixed(m < 100 ? 1 : 0)} m';
-  static const devLevels = '개발용 레벨 (고무줄·공기역학·바운스)';
+  static const devLevels = '개발용 레벨 (고무줄·공기역학·부스터·바운스)';
   static String devLevel(int lv) => 'Lv $lv';
   static String devFormula(double m) => '공식 ${m.toStringAsFixed(1)} m';
 }

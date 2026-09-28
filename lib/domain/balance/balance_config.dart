@@ -1,4 +1,5 @@
 import 'package:mozzi/core/json/json_reader.dart';
+import 'package:mozzi/domain/balance/flight_control_spec.dart';
 import 'package:mozzi/domain/balance/launch_spec.dart';
 import 'package:mozzi/domain/balance/upgrade_type.dart';
 
@@ -65,6 +66,7 @@ class BalanceConfig {
     required this.simTimeScale,
     required this.cameraBasePxPerM,
     required this.launch,
+    required this.controls,
     required List<ZoneSpec> zones,
   }) : upgrades = Map.unmodifiable(upgrades),
        zones = List.unmodifiable(zones) {
@@ -90,6 +92,7 @@ class BalanceConfig {
       simTimeScale: r.number('sim_time_scale'),
       cameraBasePxPerM: r.number('cam_base_px_per_m'),
       launch: LaunchSpec.fromJson(r),
+      controls: FlightControlSpec.fromJson(r),
       zones: r.objectList('zones').map(ZoneSpec.fromJson).toList(),
     );
   }
@@ -120,6 +123,9 @@ class BalanceConfig {
 
   /// 당기기·정확도 게이지 (GDD §2).
   final LaunchSpec launch;
+
+  /// 비행 중 조작 3종 (GDD §2).
+  final FlightControlSpec controls;
 
   /// 구역 목록 (시작 거리 오름차순).
   final List<ZoneSpec> zones;

@@ -27,6 +27,11 @@ class FlightState {
     required this.simTimeSec,
     required this.bounces,
     required this.maxHeightM,
+    this.fuelSec = 0,
+    this.fuelMaxSec = 0,
+    this.boosting = false,
+    this.inflating = false,
+    this.diving = false,
   });
 
   static const FlightState initial = FlightState(
@@ -52,6 +57,15 @@ class FlightState {
   /// 땅에 닿은 횟수.
   final int bounces;
   final double maxHeightM;
+
+  /// 남은 부스터 연료 / 최대 연료 (시뮬 초). HUD 연료 게이지.
+  final double fuelSec;
+  final double fuelMaxSec;
+
+  /// 조작 상태 (연출·HUD).
+  final bool boosting;
+  final bool inflating;
+  final bool diving;
 
   /// 이번 판 거리 (m). 결과·씨앗 계산에 쓴다.
   double get distanceM => xM;

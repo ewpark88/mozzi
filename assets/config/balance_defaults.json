@@ -52,6 +52,17 @@
   "pull_max_px": 150,
   "pull_min_power": 0.08,
   "launch_angle_max_deg": 85,
+  "boost_fuel_sec": 1.5,
+  "boost_tap_sec": 0.3,
+  "inflate_glide_ratio": 0.35,
+  "inflate_drag_per_sec": 0.25,
+  "dive_speed_ratio": 1.2,
+  "dive_bounce_mult": 1.5,
+  "dive_perfect_window_sec": 0.35,
+  "dive_perfect_mult": 1.2,
+  "gesture_hold_sec": 0.18,
+  "gesture_swipe_px": 40,
+  "gesture_swipe_max_sec": 0.35,
   "zones": [
     {
       "id": 1,

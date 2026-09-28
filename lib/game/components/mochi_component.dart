@@ -31,6 +31,12 @@ class MochiComponent extends PositionComponent {
   bool _trembling = false;
   double _clock = 0;
 
+  /// 비행 조작 연출 (GDD §3 빵빵 표정·§2 급강하). 0~1 로 부드럽게 전환.
+  double _puff = 0;
+  double _dive = 0;
+  bool _inflating = false;
+  bool _diving = false;
+
   final Paint _body = Paint()..color = MochiPalette.body;
   final Paint _patch = Paint()..color = MochiPalette.backPatch;
   final Paint _blush = Paint()
@@ -57,6 +63,12 @@ class MochiComponent extends PositionComponent {
     }
   }
 
+  /// 비행 조작 상태 (볼 부풀리기 → 볼이 빵빵, 급강하 → 회전 멈추고 길쭉).
+  void setControls({required bool inflating, required bool diving}) {
+    _inflating = inflating;
+    _diving = diving;
+  }
+
   /// 시뮬 상태를 반영한다 (월드 좌표: x 오른쪽, y 아래가 +).
   void syncFrom(FlightState s) {
     position.setValues(s.xM, -(s.yM + radiusM));
@@ -69,7 +81,7 @@ class MochiComponent extends PositionComponent {
       _seenBounces = 0;
       _spin = 0;
     }
-    angle = s.isAirborne ? _spin : 0;
+    angle = s.isAirborne && !_diving ? _spin : 0;
   }
 
   @override
@@ -79,6 +91,9 @@ class MochiComponent extends PositionComponent {
     _squash += _squashV * dt;
     _spin += dt * 2.2;
     _clock += dt;
+    final k = 1 - math.exp(-12 * dt);
+    _puff += ((_inflating ? 1 : 0) - _puff) * k;
+    _dive += ((_diving ? 1 : 0) - _dive) * k;
   }
 
   @override
@@ -100,7 +115,11 @@ class MochiComponent extends PositionComponent {
         ..scale(along, across)
         ..rotate(-_pullAngle);
     }
-    canvas.scale(sx, sy);
+    // 부풀리면 옆으로 빵빵, 급강하면 세로로 길쭉
+    canvas.scale(
+      sx * (1 + 0.15 * _puff) * (1 - 0.15 * _dive),
+      sy * (1 + 0.05 * _puff) * (1 + 0.25 * _dive),
+    );
     final bodyRect = Rect.fromCenter(
       center: Offset.zero,
       width: r * 2.1,
@@ -117,8 +136,16 @@ class MochiComponent extends PositionComponent {
         _patch..style = PaintingStyle.fill,
       )
       ..drawOval(bodyRect, _outline)
-      ..drawCircle(Offset(-r * 0.55, r * 0.25), r * 0.28, _blush)
-      ..drawCircle(Offset(r * 0.55, r * 0.25), r * 0.28, _blush)
+      ..drawCircle(
+        Offset(-r * 0.55, r * 0.25),
+        r * (0.28 + 0.12 * _puff),
+        _blush,
+      )
+      ..drawCircle(
+        Offset(r * 0.55, r * 0.25),
+        r * (0.28 + 0.12 * _puff),
+        _blush,
+      )
       ..drawCircle(Offset(-r * 0.32, -r * 0.05), r * 0.11, _eye)
       ..drawCircle(Offset(r * 0.32, -r * 0.05), r * 0.11, _eye)
       ..restore();

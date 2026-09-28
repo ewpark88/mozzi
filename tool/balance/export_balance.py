@@ -48,6 +48,17 @@ PHYS_KEYS = [
     "pull_max_px",
     "pull_min_power",
     "launch_angle_max_deg",
+    "boost_fuel_sec",
+    "boost_tap_sec",
+    "inflate_glide_ratio",
+    "inflate_drag_per_sec",
+    "dive_speed_ratio",
+    "dive_bounce_mult",
+    "dive_perfect_window_sec",
+    "dive_perfect_mult",
+    "gesture_hold_sec",
+    "gesture_swipe_px",
+    "gesture_swipe_max_sec",
 ]
 
 

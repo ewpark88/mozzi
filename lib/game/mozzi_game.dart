@@ -3,9 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flame/particles.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:mozzi/domain/balance/balance_formulas.dart';
 import 'package:mozzi/domain/balance/upgrade_levels.dart';
@@ -21,7 +19,9 @@ import 'package:mozzi/game/components/gauge_component.dart';
 import 'package:mozzi/game/components/ground_component.dart';
 import 'package:mozzi/game/components/mochi_component.dart';
 import 'package:mozzi/game/components/parallax_backdrop.dart';
-import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/game/effects/particle_effects.dart';
+import 'package:mozzi/game/input/flight_gesture.dart';
+import 'package:mozzi/game/input/play_input.dart';
 import 'package:mozzi/game/viewport/virtual_viewport.dart';
 
 /// 한 판을 화면에 보여주는 Flame 게임. 규칙은 전부 [FlightSimulator](domain)에 있고,
@@ -59,7 +59,8 @@ class MozziGame extends FlameGame implements ParallaxSource, GaugeSource {
   late final FixedStepper _stepper;
   late final CameraRig _rig;
   late final MochiComponent _mochi;
-  late final LaunchController _launch;
+  late final PlayInput _input;
+  final math.Random _fxRandom = math.Random(7);
   double _clock = 0;
   bool _wasOvercharged = false;
   VirtualViewport _viewport = const VirtualViewport(
@@ -70,11 +71,15 @@ class MozziGame extends FlameGame implements ParallaxSource, GaugeSource {
 
   UpgradeLevels get levels => _levels;
 
+  /// 볼 부풀리기·급강하 해금 (온보딩 P8 에서 설정).
+  ControlUnlocks get controlUnlocks => _input.unlocks;
+  set controlUnlocks(ControlUnlocks value) => _input.unlocks = value;
+
   @override
   VirtualViewport get viewport => _viewport;
 
   @override
-  LaunchController get launchController => _launch;
+  LaunchController get launchController => _input.launch;
 
   @override
   double get clockSec => _clock;
@@ -92,7 +97,13 @@ class MozziGame extends FlameGame implements ParallaxSource, GaugeSource {
       stepDt: FlightSimulator.fixedDt,
       timeScale: cfg.simTimeScale,
     );
-    _launch = LaunchController(cfg.launch);
+    _input = PlayInput(
+      launchSpec: cfg.launch,
+      controlSpec: cfg.controls,
+      phaseOf: () => _sim.state.phase,
+      onLaunch: _launchWith,
+      onGesture: _applyGesture,
+    );
     _rig = CameraRig(
       basePxPerM: cfg.cameraBasePxPerM,
       timeScale: cfg.simTimeScale,
@@ -130,77 +141,72 @@ class MozziGame extends FlameGame implements ParallaxSource, GaugeSource {
     _sim = FlightSimulator(FlightParams.fromLevels(formulas, levels));
     _stepper.reset();
     _rig.reset();
-    _launch.cancel();
+    _input.reset();
     pulling.value = false;
     lastLaunch.value = null;
     _publish(force: true);
   }
 
-  /// 누르기 시작 (화면 논리 px). 발사 전에만 받는다. (GDD §2 당기기)
-  void pullStart(double screenX, double screenY) {
-    if (_sim.state.phase != FlightPhase.ready) return;
-    _launch.start(screenX / _viewport.scale, screenY / _viewport.scale);
-    pulling.value = true;
+  // ---- 입력 (화면 논리 px → 가상 px). 발사 전 = 당기기, 비행 중 = 조작 3종 ----
+
+  void pointerDown(double screenX, double screenY) {
+    _input.down(screenX / _viewport.scale, screenY / _viewport.scale, _clock);
+    pulling.value = _input.pulling;
   }
 
-  void pullMove(double screenX, double screenY) =>
-      _launch.move(screenX / _viewport.scale, screenY / _viewport.scale);
+  void pointerMove(double screenX, double screenY) =>
+      _input.move(screenX / _viewport.scale, screenY / _viewport.scale, _clock);
 
-  /// 놓기: 판정 후 발사. 너무 약하면 취소.
-  void pullEnd() {
-    if (_launch.phase != PullPhase.pulling) return;
+  void pointerUp() {
+    _input.up(_clock);
     pulling.value = false;
     _wasOvercharged = false;
-    final decision = _launch.release();
-    if (decision == null) return;
-    launchWith(decision.angleRad, decision.speedMultiplier);
-    lastLaunch.value = decision;
-    final perfect = decision.judgement.grade == GaugeGrade.perfect;
-    if (perfect) _burst();
-    unawaited(HapticFeedback.heavyImpact());
   }
 
-  /// 발사 (당기기 결과 또는 테스트).
-  void launchWith(double angleRad, double speedMultiplier) {
+  void _launchWith(LaunchDecision decision) {
     if (_sim.state.phase != FlightPhase.ready) return;
-    _sim.launch(angleRad: angleRad, speedMultiplier: speedMultiplier);
+    _sim.launch(
+      angleRad: decision.angleRad,
+      speedMultiplier: decision.speedMultiplier,
+    );
+    lastLaunch.value = decision;
+    if (decision.judgement.grade == GaugeGrade.perfect) {
+      _addFx(
+        ParticleEffects.perfectBurst(
+          _mochi.position,
+          _mochi.radiusM,
+          _fxRandom,
+        ),
+      );
+    }
+    unawaited(HapticFeedback.heavyImpact());
     _publish(force: true);
   }
 
-  /// PERFECT 이펙트: 노랑·흰 반짝이 (GDD §2 “이펙트와 진동”).
-  void _burst() {
-    final rnd = math.Random(7);
-    const colors = GaugePalette.perfectBurst;
-    final r = _mochi.radiusM;
-    final added = world.add(
-      ParticleSystemComponent(
-        position: _mochi.position.clone(),
-        particle: Particle.generate(
-          count: 18,
-          lifespan: 0.6,
-          generator: (i) {
-            final a = rnd.nextDouble() * math.pi * 2;
-            final v = r * (5 + rnd.nextDouble() * 5);
-            return AcceleratedParticle(
-              speed: Vector2(math.cos(a) * v, math.sin(a) * v),
-              acceleration: Vector2(0, r * 8),
-              child: CircleParticle(
-                radius: r * 0.12,
-                paint: Paint()..color = colors[i % colors.length],
-              ),
-            );
-          },
-        ),
-      ),
-    );
+  void _applyGesture(FlightGesture g) {
+    switch (g) {
+      case FlightGesture.boostTap:
+        if (_sim.boostTap()) unawaited(HapticFeedback.lightImpact());
+      case FlightGesture.inflateStart:
+        _sim.setInflate(on: true);
+      case FlightGesture.inflateEnd:
+        _sim.setInflate(on: false);
+      case FlightGesture.dive:
+        if (_sim.dive()) unawaited(HapticFeedback.mediumImpact());
+    }
+    _publish(force: true);
+  }
+
+  void _addFx(Component fx) {
+    final added = world.add(fx);
     if (added is Future<void>) unawaited(added);
   }
 
   @override
   void update(double dt) {
     _clock += dt;
-    _launch.update(dt);
-    final over = _launch.phase == PullPhase.pulling && _launch.isOvercharged;
+    _input.tick(dt, _clock);
+    final over = _input.pulling && _input.launch.isOvercharged;
     if (over && !_wasOvercharged) unawaited(HapticFeedback.selectionClick());
     _wasOvercharged = over;
     final before = _sim.state.phase;
@@ -209,8 +215,20 @@ class MozziGame extends FlameGame implements ParallaxSource, GaugeSource {
       _sim.step();
     }
     final s = _sim.state;
-    _mochi.syncFrom(s);
+    _mochi
+      ..syncFrom(s)
+      ..setControls(inflating: s.inflating, diving: s.diving);
     _applyPull();
+    if (s.boosting && steps > 0) {
+      _addFx(
+        ParticleEffects.boostFlame(
+          _mochi.position,
+          _mochi.radiusM,
+          math.atan2(-s.vyMps, s.vxMps),
+          _fxRandom,
+        ),
+      );
+    }
     _rig.update(s, _viewport, dt);
     camera.viewfinder
       ..zoom = _viewport.scale * _rig.pxPerM
@@ -222,14 +240,15 @@ class MozziGame extends FlameGame implements ParallaxSource, GaugeSource {
 
   /// 당기는 동안 모찌를 당긴 쪽으로 끌고 늘인다 (가상 px → m: 발사 전 배율 = 기본 배율).
   void _applyPull() {
-    final pullingNow = _launch.phase == PullPhase.pulling;
-    final (px, py) = _launch.pull;
+    final launch = _input.launch;
+    final pullingNow = _input.pulling;
+    final (px, py) = launch.pull;
     final toM = _pullFollow / _rig.pxPerM;
     _mochi.setPull(
       offsetXM: pullingNow ? px * toM : 0,
       offsetYM: pullingNow ? py * toM : 0,
-      stretch: pullingNow ? _launch.stretch : 0,
-      trembling: pullingNow && _launch.isOvercharged,
+      stretch: pullingNow ? launch.stretch : 0,
+      trembling: pullingNow && launch.isOvercharged,
     );
   }
 

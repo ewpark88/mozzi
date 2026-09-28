@@ -70,6 +70,10 @@ Sep 26, 2026 · @ewpark
 | 볼 부풀리기 | 홀드 | 낙하산처럼 활공, 대신 속도 감소 | 멀리 vs 빠르게의 선택 |
 | 급강하 | 아래로 스와이프 | 빠르게 떨어져 바운스 오브젝트에 맞으면 크게 튀어 오름 | 타이밍을 맞히면 퍼펙트 보너스 |
 
+- 부스터 연료는 업그레이드 표의 부스터 추가 거리(20 × Lv^1.3 m)를 1.5초 동안 나눠 쓰는 양이다. 탭 한 번에 0.3초씩 쓰고, 공중에서 다 쓰면 공식 거리만큼 더 날아간다. 착지하면 분사 중이던 연료는 사라진다. 부스터 Lv0은 연료가 없다.
+- 볼 부풀리기는 낙하 속도를 수평 속도의 0.35배로 제한하고 수평 속도를 초당 25%씩 줄인다. 급강하는 낙하 속도를 수평 속도의 1.2배 이상으로 만든다.
+- 탭(0.18초 안에 뗌), 홀드(0.18초 이상), 스와이프(0.35초 안에 아래로 40px)를 구분한다. 세부 수치는 밸런스 시트 「설정」 비행 조작 표.
+
 ### 콤보와 착지
 
 - 땅에 닿지 않고 오브젝트를 연속으로 맞히면 씨앗 배율이 ×1.1씩 쌓인다. 착지하면 초기화된다.
@@ -420,6 +424,7 @@ Flutter + Flame으로 만들고, 모든 밸런스 값은 Firebase Remote Config�
 - 물리와 보상: `phys_v0`, `phys_g`, `phys_boost_k`, `coin_per_m`
 - 게이지: `gauge_max_power`(1.1), `gauge_zone_width`(0.1), `gauge_great_off`(0.3), `gauge_good_off`(0.6), `gauge_speed_base`(0.45), `gauge_speed_k`(1.35), `gauge_over_k`(9), `gauge_perfect_mult`(1.15), `gauge_{great,good,miss}_mult_{min,max}`, `gauge_speed_exponent`(0.5)
 - 당기기: `pull_max_px`(150), `pull_min_power`(0.08), `launch_angle_max_deg`(85)
+- 비행 조작: `boost_fuel_sec`(1.5), `boost_tap_sec`(0.3), `inflate_glide_ratio`(0.35), `inflate_drag_per_sec`(0.25), `dive_speed_ratio`(1.2), `dive_bounce_mult`(1.5), `dive_perfect_window_sec`(0.35), `dive_perfect_mult`(1.2), `gesture_hold_sec`(0.18), `gesture_swipe_px`(40), `gesture_swipe_max_sec`(0.35)
 - 체감: `sim_time_scale`, `cam_base_px_per_m` (2.5D 샘플 기준 계산값)
 - 광고: `ad_interstitial_every`, `ad_interstitial_grace_runs`, `ad_reward_multiplier`
 - 이벤트: `evt_golden_seed_rate`, `evt_chest_rate`, `evt_ufo_rate`, `liveops_active_event`

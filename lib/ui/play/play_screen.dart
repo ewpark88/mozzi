@@ -5,6 +5,7 @@ import 'package:mozzi/domain/balance/upgrade_levels.dart';
 import 'package:mozzi/domain/balance/upgrade_type.dart';
 import 'package:mozzi/game/mozzi_game.dart';
 import 'package:mozzi/ui/play/dev_panel.dart';
+import 'package:mozzi/ui/play/flight_hud.dart';
 import 'package:mozzi/ui/play/hud_scale.dart';
 import 'package:mozzi/ui/play/play_hud.dart';
 
@@ -31,10 +32,12 @@ class _PlayScreenState extends State<PlayScreen> {
     _game = MozziGame(formulas: widget.formulas, levels: _levelsFor(0));
   }
 
-  /// P2 에서는 부스터(P4)·볼주머니(씨앗)를 뺀 비행 레벨만 올린다.
+  /// 개발용: 비행에 영향 주는 4종(볼주머니 제외)을 같은 레벨로. Lv0 은 부스터 연료 없음 →
+  /// 조작 확인용으로 최소 부스터 1 을 준다.
   UpgradeLevels _levelsFor(int lv) => UpgradeLevels.of({
     UpgradeType.launch: lv,
     UpgradeType.aero: lv,
+    UpgradeType.boost: lv == 0 ? 1 : lv,
     UpgradeType.bounce: lv,
   });
 
@@ -55,11 +58,11 @@ class _PlayScreenState extends State<PlayScreen> {
           return Listener(
             behavior: HitTestBehavior.opaque,
             onPointerDown: (e) =>
-                _game.pullStart(e.localPosition.dx, e.localPosition.dy),
+                _game.pointerDown(e.localPosition.dx, e.localPosition.dy),
             onPointerMove: (e) =>
-                _game.pullMove(e.localPosition.dx, e.localPosition.dy),
-            onPointerUp: (_) => _game.pullEnd(),
-            onPointerCancel: (_) => _game.pullEnd(),
+                _game.pointerMove(e.localPosition.dx, e.localPosition.dy),
+            onPointerUp: (_) => _game.pointerUp(),
+            onPointerCancel: (_) => _game.pointerUp(),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -76,6 +79,16 @@ class _PlayScreenState extends State<PlayScreen> {
                       final last = _game.lastLaunch.value;
                       return Stack(
                         children: [
+                          Positioned(
+                            left: 0,
+                            bottom: 0,
+                            child: FlightHud(
+                              state: state,
+                              scale: scale,
+                              showInflate: true,
+                              showDive: true,
+                            ),
+                          ),
                           PlayHud(
                             state: state,
                             pulling: _game.pulling.value,

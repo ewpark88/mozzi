@@ -51,3 +51,13 @@ abstract final class GaugePalette {
     Color(0xFFFFB020),
   ];
 }
+
+/// 연출용 색 (2.5D 샘플 기준).
+abstract final class FxPalette {
+  /// 부스터 불꽃 (샘플 fire).
+  static const fire = [Color(0xFFFFD95A), Color(0xFFFF9F43), Color(0xFFFF6B3D)];
+
+  /// 연료 게이지 (샘플 drawFuel).
+  static const fuel = Color(0xFFFF7A3D);
+  static const fuelEmpty = Color(0xFFC9B9A6);
+}
