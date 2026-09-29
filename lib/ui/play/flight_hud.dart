@@ -20,6 +20,12 @@ class FlightHud extends StatelessWidget {
   final bool showInflate;
   final bool showDive;
 
+  List<String> get _hints => [
+    if (state.fuelMaxSec > 0) Strings.hintBoost,
+    if (showInflate) Strings.hintInflate,
+    if (showDive) Strings.hintDive,
+  ];
+
   @override
   Widget build(BuildContext context) {
     final flying = state.phase == FlightPhase.flying;
@@ -30,16 +36,10 @@ class FlightHud extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           if (state.fuelMaxSec > 0) FuelGauge(state: state, scale: scale),
-          if (flying) ...[
+          // 쓸 수 있는 조작만 안내 (부스터 Lv0 은 연료 없음 — GDD §9 1판은 당기기만)
+          if (flying && _hints.isNotEmpty) ...[
             SizedBox(height: 6 * scale),
-            _Hint(
-              text: [
-                Strings.hintBoost,
-                if (showInflate) Strings.hintInflate,
-                if (showDive) Strings.hintDive,
-              ].join('  ·  '),
-              scale: scale,
-            ),
+            _Hint(text: _hints.join('  ·  '), scale: scale),
           ],
         ],
       ),
