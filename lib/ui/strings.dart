@@ -80,6 +80,12 @@ abstract final class Strings {
   static String upgradeCost(int cost) => '씨앗 $cost';
   static const back = '돌아가기';
 
+  // 온보딩 (GDD §9)
+  static const tutorialBoost = '날아가는 중에 화면을 탭하면 부스터!';
+  static const tutorialPerfect = '바늘이 가운데 초록 구간에 올 때 놓으면 PERFECT!';
+  static String freeUpgrade(String name) => '$name 무료 업그레이드!';
+  static const adOfferHint = '광고를 보면 이번 판 씨앗이 2배!';
+
   // 개발용 갤러리 (P7)
   static const gallery = '모찌 갤러리';
   static const galleryFly = '비행 자세';

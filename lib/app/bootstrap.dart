@@ -8,15 +8,17 @@ import 'package:mozzi/app/app.dart';
 import 'package:mozzi/app/providers.dart';
 import 'package:mozzi/core/env/app_env.dart';
 import 'package:mozzi/core/json/json_reader.dart';
+import 'package:mozzi/data/audio/soloud_sound_service.dart';
 import 'package:mozzi/data/save/hive_save_store.dart';
 import 'package:mozzi/domain/progress/player_progress.dart';
 import 'package:mozzi/domain/services/save_store.dart';
+import 'package:mozzi/game/audio/sfx_bank.dart';
 
 /// 모든 flavor 진입점의 공통 시작 루틴. 서비스 초기화 순서는 여기서만 정한다.
 ///
 /// 0. 화면 방향·시스템 UI
 /// 1. 밸런스 기본값 로드 (assets/config/balance_defaults.json)
-/// 2. 세이브 로드 (Hive) · (P9) Remote Config · Analytics · 광고 초기화
+/// 2. 세이브 로드 (Hive) · 효과음 합성·로드 · (P9) Remote Config · Analytics · 광고 초기화
 Future<void> bootstrap(AppEnv env) async {
   WidgetsFlutterBinding.ensureInitialized();
   // 가로 고정 (ADR-011). 좌·우 가로 모두 허용, 몰입 모드.
@@ -29,6 +31,8 @@ Future<void> bootstrap(AppEnv env) async {
   await Hive.initFlutter();
   final store = await HiveSaveStore.open();
   final progress = await _loadProgress(store);
+  final sound = SoloudSoundService();
+  await sound.load(SfxBank.build());
   runApp(
     ProviderScope(
       overrides: [
@@ -36,6 +40,7 @@ Future<void> bootstrap(AppEnv env) async {
         balanceConfigProvider.overrideWithValue(balance),
         saveStoreProvider.overrideWithValue(store),
         initialProgressProvider.overrideWithValue(progress),
+        soundServiceProvider.overrideWithValue(sound),
       ],
       child: const MozziApp(),
     ),

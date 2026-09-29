@@ -22,7 +22,7 @@
 ```
 | 레이어 | 경로 | 역할 | import 가능 | 금지 |
 |---|---|---|---|---|
-| core | `lib/core/` | 공용 유틸: 결정론 RNG, Result, 로거 인터페이스, 환경값 | core | flutter, flame, riverpod, hive, dart:ui |
+| core | `lib/core/` | 공용 유틸: 결정론 RNG, Result, 로거 인터페이스, 환경값, PCM 합성 | core | flutter, flame, riverpod, hive, dart:ui |
 | domain | `lib/domain/` | 게임 규칙·시뮬·경제·진행·서비스 인터페이스 | core, domain | flutter, flame, riverpod, hive, dart:ui |
 | data | `lib/data/` | domain 인터페이스 구현(Hive, Firebase, AdMob, IAP, Fake) | core, domain, data | game, ui |
 | game | `lib/game/` | Flame 게임, 컴포넌트(렌더), 카메라, 패럴랙스, 입력 변환 | core, domain, game | data, ui |
@@ -107,3 +107,4 @@ shaders/                    # FragmentShader(.frag) — pubspec flutter.shaders 
 | AdService | 즉시 보상 지급 / 스킵 | google_mobile_ads (테스트 ID) |
 | IapService | 즉시 구매 성공 | in_app_purchase |
 | SaveStore | 메모리 (테스트) | Hive — 모든 flavor (P6, ADR-017) + Firestore 백업(v1.1) |
+| SoundService | 무음 + 재생 기록 (테스트) | flutter_soloud — 모든 flavor (P8, ADR-019) |

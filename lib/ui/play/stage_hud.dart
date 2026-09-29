@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mozzi/game/render/palette.dart';
 import 'package:mozzi/game/run_hud_info.dart';
+import 'package:mozzi/ui/app_theme.dart';
 import 'package:mozzi/ui/strings.dart';
 
 /// 스테이지 HUD (GDD §4): 오른쪽 위 스테이지·목표·★★★ 미션·씨앗·콤보,
@@ -25,6 +26,7 @@ class StageHud extends StatelessWidget {
       fontSize: 13 * scale,
       color: MochiPalette.outline,
       fontWeight: FontWeight.bold,
+      fontFamily: AppFonts.title,
     );
     final goal = info.goalM;
     return Padding(

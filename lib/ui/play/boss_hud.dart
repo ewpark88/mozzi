@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mozzi/game/boss_hud_info.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/ui/app_theme.dart';
 import 'package:mozzi/ui/strings.dart';
 
 /// 보스 HUD (GDD §4 보스 스테이지 상세), 거리 표시 아래:
@@ -23,6 +24,7 @@ class BossHud extends StatelessWidget {
     final text = TextStyle(
       fontSize: 13 * scale,
       fontWeight: FontWeight.bold,
+      fontFamily: AppFonts.title,
       color: MochiPalette.outline,
     );
     final rival = b.rivalXM;

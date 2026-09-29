@@ -12,6 +12,9 @@ class ResultActions {
     this.adMultiplier = 2,
     this.adClaimed = false,
     this.onNextStage,
+    this.freeUpgrade,
+    this.onFreeUpgrade,
+    this.adHighlight = false,
   });
 
   final VoidCallback onRetry;
@@ -25,6 +28,13 @@ class ResultActions {
 
   /// 클리어했고 다음 스테이지가 열려 있으면.
   final VoidCallback? onNextStage;
+
+  /// 온보딩 첫 무료 업그레이드 버튼 문구·동작 (GDD §9 2판).
+  final String? freeUpgrade;
+  final VoidCallback? onFreeUpgrade;
+
+  /// 광고 2배를 처음 제안하는 판이면 안내 문구 (GDD §9 3판).
+  final bool adHighlight;
 }
 
 /// 결과 화면 버튼 줄: 광고 2배(강조) → 다음 스테이지 / 재도전 → 업그레이드 · 월드맵.
@@ -58,6 +68,17 @@ class ResultButtons extends StatelessWidget {
       spacing: 8 * scale,
       runSpacing: 8 * scale,
       children: [
+        if (a.freeUpgrade case final label?)
+          filled(label, a.onFreeUpgrade, GaugePalette.perfectDark),
+        if (a.adHighlight && !a.adClaimed && a.onAdDouble != null)
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              Strings.adOfferHint,
+              textAlign: TextAlign.center,
+              style: text.copyWith(color: GaugePalette.perfectDark),
+            ),
+          ),
         if (a.adClaimed)
           filled(Strings.adDone, null, GaugePalette.perfect)
         else if (a.onAdDouble case final onAd?)

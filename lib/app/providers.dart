@@ -4,13 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mozzi/core/env/app_env.dart';
 import 'package:mozzi/data/fake/fake_ad_service.dart';
+import 'package:mozzi/data/fake/silent_sound_service.dart';
 import 'package:mozzi/domain/balance/balance_config.dart';
 import 'package:mozzi/domain/balance/balance_formulas.dart';
 import 'package:mozzi/domain/economy/upgrade_service.dart';
+import 'package:mozzi/domain/onboarding/onboarding.dart';
 import 'package:mozzi/domain/progress/player_progress.dart';
 import 'package:mozzi/domain/progress/run_recorder.dart';
 import 'package:mozzi/domain/services/ad_service.dart';
 import 'package:mozzi/domain/services/save_store.dart';
+import 'package:mozzi/domain/services/sound_service.dart';
 
 /// 밸런스 기본값 에셋 경로 (← tool/balance/export_balance.py 가 생성).
 const balanceDefaultsAsset = 'assets/config/balance_defaults.json';
@@ -50,6 +53,15 @@ final initialProgressProvider = Provider<PlayerProgress>(
 
 /// 광고. P9 전까지 모든 flavor 가짜 구현 (보상형 = 항상 시청 완료).
 final adServiceProvider = Provider<AdService>((ref) => FakeAdService());
+
+/// 효과음. bootstrap 에서 합성음을 불러온 flutter_soloud 구현으로 주입 (테스트는 무음).
+final soundServiceProvider = Provider<SoundService>(
+  (ref) => SilentSoundService(),
+);
+
+final onboardingProvider = Provider<Onboarding>(
+  (ref) => Onboarding(ref.watch(balanceFormulasProvider)),
+);
 
 /// 번들 에셋에서 밸런스 기본값을 읽는다.
 Future<BalanceConfig> loadBalanceDefaults(AssetBundle bundle) async =>

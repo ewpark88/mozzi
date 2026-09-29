@@ -140,6 +140,17 @@
   - DoD “셰이더 로드 실패 시 대체 경로 테스트” → “저사양 경로 테스트”.
 - 결과: 테스트 환경에서도 같은 경로로 그려져 표정 9종 × 자세 × 저사양을 전부 검증. GDD §10 캐릭터 렌더링 문구 수정 제안 G24.
 
+## ADR-019 효과음 코드 합성 + flutter_soloud, OFL 폰트, 온보딩 범위
+- 날짜: 2026-09-29 · 상태: 채택 (P8, 사용자 승인) · Q4 해결
+- 결정:
+  1. **효과음**: 샘플의 tone·noise·squeak·boost 를 순수 Dart PCM 합성(`core/audio/pcm_synth.dart`, 22.05kHz 16bit 모노 WAV, 노이즈 시드 고정 → 결정론)으로 옮기고, 앱 시작 시 한 번 합성해 메모리로 불러온다(`game/audio/sfx_bank.dart`).
+     재생은 **flutter_soloud**(^4.1.7): 저지연, 루프 재생 중 재생 속도(음높이)·음량 조절 → 고무 소리 음높이 상승·콤보 음계 상승을 재생 속도로 처리. audioplayers 보다 지연이 작고 루프 음높이 조절이 부드럽다. 초기화 실패 시 로그 후 무음 진행. 인터페이스 `domain/services/SoundService`, 테스트는 `SilentSoundService`.
+  2. **폰트**: OFL 인 Jua(제목·버튼·HUD 굵은 글자)·Gowun Dodum(본문)을 `assets/fonts/` 에 라이선스와 함께 번들 (`ui/app_theme.dart`).
+  3. **표정**: `domain/character/ExpressionMachine` 이 게임 이벤트로 표정·지속 시간을 정하고, `game/RunPresenter` 가 표정·효과음·파티클·진동을 한곳에서 연결 (MozziGame 은 진행만).
+  4. **온보딩**(GDD §9) 은 판 수로 단계를 정한다(`domain/onboarding/Onboarding`). 첫 무료 업그레이드 = 1판 뒤 **부스터 Lv1** (Lv0 은 연료가 없어 2판에 부스터를 가르칠 수 없음, `onboardingStep` 1 = 받음). 1판 트램폴린은 조작 없이 날린 기대 거리 × 0.8 에 고정 배치.
+     시스템이 아직 없는 단계는 해당 Phase 로: 3판 황금 씨앗 확정 → P14, 5판 이후 전면 광고 → P9, 월드 1 클리어 캐릭터 교체 안내 → P12.
+- 결과: 에셋 없이 소리·폰트·표정이 들어가고, 합성음은 테스트로 바이트 단위 검증. GDD 제안 G26(무료 업그레이드 = 부스터).
+
 ## ADR-007 Android applicationId `com.repo.mozzi`, flavor dev/prod
 - 날짜: 2026-09-28 · 상태: 채택
 - 결정: prod `com.repo.mozzi`, dev `com.repo.mozzi.dev`. iOS 는 v1.0 이후 구성.

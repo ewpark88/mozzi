@@ -1,14 +1,14 @@
 # 작업 인수인계 (세션 재시작용)
 
-> 마지막 갱신: 2026-09-29 · P7 완료 직후. **새 세션은 이 문서 → CLAUDE.md → DEV_PLAN 의 다음 Phase 순서로 읽고 시작한다.**
+> 마지막 갱신: 2026-09-29 · P8 완료 직후. **새 세션은 이 문서 → CLAUDE.md → DEV_PLAN 의 다음 Phase 순서로 읽고 시작한다.**
 
 ## 1. 지금 상태 한눈에
 
 | 항목 | 상태 |
 |---|---|
-| 완료 Phase | P0 하네스 · P1 도메인 코어 · P2 비행 시뮬 · P3 당기기·게이지 · P4 비행 조작 3종 · P5 오브젝트·스테이지·★★★ · P6 메타 루프·월드맵·보스 · P7 2.5D 코드 렌더링 |
-| 다음 Phase | **P8 온보딩·표정·사운드 합성** (DEV_PLAN §P8 체크리스트) |
-| 버전 | `0.7.0+8` (pubspec) |
+| 완료 Phase | P0 하네스 · P1 도메인 코어 · P2 비행 시뮬 · P3 당기기·게이지 · P4 비행 조작 3종 · P5 오브젝트·스테이지·★★★ · P6 메타 루프·월드맵·보스 · P7 2.5D 코드 렌더링 · P8 온보딩·표정·사운드 |
+| 다음 Phase | **P9 외부 서비스 연동** — Firebase 프로젝트·AdMob 계정이 필요하므로 사용자 준비 먼저 확인 |
+| 버전 | `0.8.0+9` (pubspec) |
 | 브랜치 | `main` = `f6106c8` (P5 머지), CI green. Phase 브랜치 `feat/P{N}-*` 는 모두 main 에 fast-forward 머지됨 |
 | 원격 | https://github.com/ewpark88/mozzi (gh CLI 없음 → PR 없이 로컬 ff 머지 후 push, CI 는 GitHub API 로 확인) |
 | 품질 | `bash tool/verify.sh` 통과, 테스트 385개, lib 62개 파일 5,545줄, 파일당 300줄 이하 |
@@ -19,7 +19,7 @@
 
 1. **모든 개발 근거 = GDD(`모찌 런처 게임 기획서 (GDD).md`) + 밸런스 시트(`모찌런처_밸런스시트.xlsx`)**, 손맛·렌더링 시각 기준 = `모찌 런처 2.5D.html`(사용자 샘플). 수치는 GDD/시트 우선, 샘플과 다르면 알린다.
 2. **GDD 는 계속 갱신된다** → 매 프롬프트 훅이 `tool/spec/spec_sync.py --hook` 으로 변경을 알려준다. 알림이 오면 먼저 `/spec-sync` (diff 확인 → 시트·DEV_PLAN·코드 반영 → `--mark`).
-3. **GDD 파일은 절대 직접 수정하지 않는다.** 사용자가 다른 원본에서 파일을 통째로 덮어써서 직접 수정이 세 번 모두 되돌아갔다. 오류·누락은 `docs/SPEC_CHANGELOG.md` “GDD 수정 제안”(현재 G24·G25)에 적고 알린다.
+3. **GDD 파일은 절대 직접 수정하지 않는다.** 사용자가 다른 원본에서 파일을 통째로 덮어써서 직접 수정이 세 번 모두 되돌아갔다. 오류·누락은 `docs/SPEC_CHANGELOG.md` “GDD 수정 제안”(현재 G24~G26)에 적고 알린다.
 4. **밸런스 시트는 직접 고친다** (GDD 수치 반영·오류 정정). 반드시 `tool/balance/xlsx_edit.ps1`(Excel COM)로 — openpyxl 로 저장하면 수식 캐시가 사라진다. 고치면 `export_balance.py` → verify → SPEC_CHANGELOG 기록.
 5. **Phase 완료 시 Claude 가 커밋 → 브랜치 push → main ff 머지 → push → CI 확인**까지 한다 (사용자 지시). 태그·스토어 업로드는 요청 시에만.
 6. 사용자는 “진행해”로 다음 단계를 지시한다. 미결 기획 사항은 GDD 우선 원칙으로 정하고 ADR·시트 값으로 되돌릴 수 있게 한 뒤 보고한다.
@@ -31,7 +31,7 @@
 
 | 경로 | 내용 |
 |---|---|
-| `core/` | `SeededRng`(xorshift32), `roundHalfUp`(Excel ROUND), `JsonReader`(타입 검증·경로 오류), `Result`, `AppEnv`(flavor) |
+| `core/` | `PcmSynth`(효과음 PCM 합성), `SeededRng`(xorshift32), `roundHalfUp`(Excel ROUND), `JsonReader`(타입 검증·경로 오류), `Result`, `AppEnv`(flavor) |
 | `domain/balance/` | `BalanceConfig`(JSON 전체) ← `LaunchSpec`(게이지·당기기), `FlightControlSpec`(조작 3종), `WorldConfig`(오브젝트·배치·스테이지·보스), `StageSpec`/`MissionSpec`; `BalanceFormulas`(GDD §5 공식), `PacingSimulator`(시트 「진행 시뮬」 재현), `UpgradeType`/`UpgradeLevels` |
 | `domain/sim/` | `FlightSimulator`(고정 dt 1/60, 해석적 적분, 활공·부스터·급강하, `redirect`·`forceGlide`), `FlightParams`(레벨→물리), `FlightControls`, `landing.dart`(튐→미끄러짐), `FixedStepper`, `AccuracyGauge`, `LaunchController` |
 | `domain/world/` | `ObjectKind`(12종)·`ObjectCategory`, `ChunkGenerator`(100m 결정론)·`WorldObject`·`ObjectField`, `CourseTweak`(2-5 코스 조정) |
@@ -55,6 +55,7 @@
 | 014 | 조작: 탭=부스터·홀드=부풀리기·아래 스와이프=급강하, 부스터 연료 = 공식 부스터 거리 예산(공중에서 다 쓰면 공식 일치) |
 | 015 | RunSession 구조, 청크 거리 배율, 콤보는 먹은 씨앗에만, 미션 = 타입 문자열 + 파라미터 |
 | 016 | RC 키·스테이지 데이터 형식 = GDD §10·§4 이름 |
+| 019 | 효과음 = PCM 합성 + flutter_soloud, 폰트 Jua·Gowun Dodum, 온보딩 = 판 수 기준(무료 업그레이드 = 부스터 Lv1) |
 | 018 | 2.5D = Canvas 그라데이션 + Picture 캐시(셰이더 없음), 저사양 = 털·안개 끔 |
 | 017 | 판 씨앗 = 거리 씨앗 + 먹은 씨앗×볼주머니, 보스 시간은 실제 초·수치는 시트, 보스 패배 시 즉시 종료, 세이브 v2 모든 flavor Hive |
 
@@ -92,13 +93,13 @@ flutter build apk --flavor dev --debug -t lib/main_dev.dart --dart-define-from-f
 | 항목 | 상태 |
 |---|---|
 | 실기기 확인 | P2~P5 전부 “사용자 확인 필요” — 60fps, 당김·게이지 손맛, 조작 임계값, 오브젝트 체감 |
-| GDD 수정 제안 | G24(캐릭터 렌더링 문구)·G25(`render_low_spec` RC 키) 반영 대기 |
+| GDD 수정 제안 | G24(캐릭터 렌더링 문구)·G25(`render_low_spec` RC 키)·G26(무료 업그레이드 = 부스터) 반영 대기 |
 | 보스 체감 | 고양이 6초·대장 16초·까마귀 초당 1.9% 는 시뮬 설계값 → 실기기 플레이로 시트 조정 |
 | 온보딩 | 조작 해금(`ControlUnlocks`, 1-5 보스 클리어 보상), 1판 트램폴린 자동 배치 등은 P8 |
 | 2.5D 렌더링 | P7 완료. 보스·월드맵·고스트 깃발은 아직 단색 — 아트 품질 확인 후 필요하면 개선 |
 
-## 7-1. P8 시작 시 바로 할 일
+## 7-1. P9 시작 시 바로 할 일
 
-1. `PYTHONIOENCODING=utf-8 python tool/spec/spec_sync.py` 로 GDD 변경 확인 → 있으면 `/spec-sync`.
-2. `git switch -c feat/P8-onboarding-sound` (main 에서).
-3. DEV_PLAN §P8: 온보딩(GDD §9), 표정 상태 머신(domain → `MochiComponent.expression`), 합성음(샘플 squeak·boost·tone·noise), 폰트 OFL.
+1. **사용자 준비물 확인**: Firebase 프로젝트(dev/prod), AdMob 계정·앱 ID, Play Console 인앱 상품. 없으면 P9 착수 전 알린다.
+2. `PYTHONIOENCODING=utf-8 python tool/spec/spec_sync.py` 로 GDD 변경 확인.
+3. `git switch -c feat/P9-services` (main 에서). 서비스 인터페이스는 `domain/services/`(SaveStore·AdService·SoundService 있음), 가짜는 `data/fake/`.

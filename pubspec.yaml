@@ -4,7 +4,7 @@ publish_to: 'none'
 
 # 버전 규칙: docs/BUILD_RELEASE.md §3 참조.
 # MAJOR.MINOR.PATCH+BUILD — MVP 기간은 0.x, BUILD는 스토어 업로드마다 +1.
-version: 0.7.0+8
+version: 0.8.0+9
 
 environment:
   sdk: ^3.12.0
@@ -15,6 +15,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^3.4.3
+  flutter_soloud: ^4.1.7
   hive_ce: ^2.20.1
   hive_ce_flutter: ^2.4.0
   meta: ^1.18.0
@@ -30,3 +31,12 @@ flutter:
 
   assets:
     - assets/config/
+
+  # OFL 폰트 (GDD §3 제작 원칙, ADR-019). 라이선스: assets/fonts/OFL-*.txt
+  fonts:
+    - family: Jua
+      fonts:
+        - asset: assets/fonts/Jua-Regular.ttf
+    - family: GowunDodum
+      fonts:
+        - asset: assets/fonts/GowunDodum-Regular.ttf

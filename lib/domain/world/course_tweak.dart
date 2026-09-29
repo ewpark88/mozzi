@@ -16,7 +16,11 @@ class CourseTweak {
     StageSpec? stage,
     BalanceConfig config, {
     required int runSeed,
+    double? tutorialTrampM,
   }) {
+    if (tutorialTrampM != null) {
+      return CourseTweak.tutorial(tutorialTrampM, config);
+    }
     final goal = stage?.targetM;
     if (stage == null || stage.id != pigeonRaceId || goal == null) return none;
     final boss = config.world.boss;
@@ -33,6 +37,19 @@ class CourseTweak {
       ],
     );
   }
+
+  /// 온보딩 1판: 트램폴린 하나를 [xM] 에 고정 배치 (GDD §9).
+  factory CourseTweak.tutorial(double xM, BalanceConfig config) => CourseTweak(
+    fixed: [
+      WorldObject(
+        id: _fixedIdBase,
+        kind: ObjectKind.tramp,
+        xM: xM,
+        yM: 0,
+        scale: config.world.spawn.scaleAt(xM),
+      ),
+    ],
+  );
 
   static const CourseTweak none = CourseTweak();
 

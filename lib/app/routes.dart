@@ -7,6 +7,7 @@ import 'package:mozzi/app/providers.dart';
 import 'package:mozzi/domain/balance/stage_spec.dart';
 import 'package:mozzi/domain/progress/stage_unlocks.dart';
 import 'package:mozzi/ui/dev/mochi_gallery_screen.dart';
+import 'package:mozzi/ui/play/play_hooks.dart';
 import 'package:mozzi/ui/play/play_screen.dart';
 import 'package:mozzi/ui/upgrade/upgrade_screen.dart';
 import 'package:mozzi/ui/world_map/world_map_screen.dart';
@@ -68,6 +69,10 @@ class PlayRoute extends ConsumerWidget {
         onUpgrades: () => openUpgrades(context),
         onAdDouble: ads.rewardedReady ? ctl.adDouble : null,
         adMultiplier: config.adRewardMultiplier,
+        sound: ref.watch(soundServiceProvider),
+        freeUpgrade: () => ctl.freeUpgrade,
+        onClaimFreeUpgrade: ctl.claimFreeUpgrade,
+        highlightAdOffer: () => ctl.highlightAdOffer,
       ),
     );
   }

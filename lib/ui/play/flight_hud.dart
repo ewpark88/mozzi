@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mozzi/domain/sim/flight_state.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/ui/app_theme.dart';
 import 'package:mozzi/ui/strings.dart';
 
 /// 비행 중 HUD: 부스터 연료 게이지 + 조작 안내 (GDD §2 비행 중 조작 3종).
@@ -67,6 +68,7 @@ class FuelGauge extends StatelessWidget {
           style: TextStyle(
             fontSize: 13 * scale,
             fontWeight: FontWeight.bold,
+            fontFamily: AppFonts.title,
             color: MochiPalette.outline,
           ),
         ),

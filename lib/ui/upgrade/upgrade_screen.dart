@@ -5,6 +5,7 @@ import 'package:mozzi/domain/balance/upgrade_type.dart';
 import 'package:mozzi/domain/economy/upgrade_service.dart';
 import 'package:mozzi/domain/progress/player_progress.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/ui/app_theme.dart';
 import 'package:mozzi/ui/play/hud_scale.dart';
 import 'package:mozzi/ui/strings.dart';
 
@@ -34,6 +35,7 @@ class UpgradeScreen extends StatelessWidget {
           final text = TextStyle(
             fontSize: 18 * scale,
             fontWeight: FontWeight.bold,
+            fontFamily: AppFonts.title,
             color: MochiPalette.outline,
           );
           return SafeArea(
@@ -111,6 +113,7 @@ class _UpgradeRow extends StatelessWidget {
     final text = TextStyle(
       fontSize: 15 * scale,
       fontWeight: FontWeight.bold,
+      fontFamily: AppFonts.title,
       color: MochiPalette.outline,
     );
     return Card(

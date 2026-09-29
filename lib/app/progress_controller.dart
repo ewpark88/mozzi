@@ -53,8 +53,11 @@ class ProgressController extends Notifier<PlayerProgress> {
   RunSetup setupFor(StageSpec? stage) {
     final p = state;
     final best = stage == null ? 0.0 : p.stage(stage.id).bestDistanceM;
+    final onboarding = ref.read(onboardingProvider);
     return RunSetup(
       stage: stage,
+      tutorialTrampM: onboarding.tutorialTrampM(p),
+      hint: onboarding.hintFor(p),
       levels: p.levels,
       bossEase: stage == null
           ? 0
@@ -66,6 +69,17 @@ class ProgressController extends Notifier<PlayerProgress> {
       ),
     );
   }
+
+  /// 온보딩 첫 무료 업그레이드 (GDD §9 2판). 받을 게 없으면 null.
+  UpgradeType? get freeUpgrade =>
+      ref.read(onboardingProvider).freeUpgrade(state);
+
+  void claimFreeUpgrade() =>
+      _set(ref.read(onboardingProvider).claimFreeUpgrade(state));
+
+  /// 방금 끝난 판이 광고 2배를 처음 강조할 판인지 (GDD §9 3판).
+  bool get highlightAdOffer =>
+      ref.read(onboardingProvider).highlightAdOffer(state);
 
   /// [stage] 다음 스테이지가 열려 있으면 그 스테이지.
   StageSpec? nextStageOf(StageSpec stage) {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:mozzi/domain/onboarding/onboarding.dart';
 import 'package:mozzi/domain/sim/flight_state.dart';
 import 'package:mozzi/domain/sim/launch_controller.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/ui/app_theme.dart';
 import 'package:mozzi/ui/play/grade_popup.dart';
 import 'package:mozzi/ui/strings.dart';
 
@@ -12,6 +14,7 @@ class PlayHud extends StatelessWidget {
     required this.pulling,
     required this.lastLaunch,
     required this.scale,
+    this.hint,
     super.key,
   });
 
@@ -19,6 +22,9 @@ class PlayHud extends StatelessWidget {
   final bool pulling;
   final LaunchDecision? lastLaunch;
   final double scale;
+
+  /// 이번 판 온보딩 안내 (GDD §9).
+  final OnboardingHint? hint;
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +37,11 @@ class PlayHud extends StatelessWidget {
             child: _DistanceBadge(meters: state.distanceM, scale: scale),
           ),
         ),
-        if (state.phase == FlightPhase.ready && !pulling)
+        if (_hintText() case final text?)
           Align(
             // 모찌(지면선 80%)를 가리지 않게 하늘 쪽에 둔다
             alignment: const Alignment(0, -0.45),
-            child: _Pill(text: Strings.pullHint, scale: scale),
+            child: _Pill(text: text, scale: scale),
           ),
         Align(
           alignment: const Alignment(-0.2, -0.1),
@@ -44,6 +50,18 @@ class PlayHud extends StatelessWidget {
       ],
     );
   }
+}
+
+extension on PlayHud {
+  /// 발사 전 = 당기기 안내(5판은 PERFECT 안내), 비행 중 2판 = 부스터 안내.
+  String? _hintText() => switch (state.phase) {
+    FlightPhase.ready when hint == OnboardingHint.perfect =>
+      Strings.tutorialPerfect,
+    FlightPhase.ready when !pulling => Strings.pullHint,
+    FlightPhase.flying when hint == OnboardingHint.boost =>
+      Strings.tutorialBoost,
+    _ => null,
+  };
 }
 
 class _DistanceBadge extends StatelessWidget {
@@ -84,6 +102,7 @@ class _Pill extends StatelessWidget {
         style: TextStyle(
           fontSize: fontSize * scale,
           fontWeight: FontWeight.bold,
+          fontFamily: AppFonts.title,
           color: MochiPalette.outline,
         ),
       ),

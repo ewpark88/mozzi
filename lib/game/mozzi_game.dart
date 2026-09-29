@@ -7,7 +7,7 @@ import 'package:mozzi/domain/balance/balance_formulas.dart';
 import 'package:mozzi/domain/balance/world_config.dart';
 import 'package:mozzi/domain/run/boss/boss_rule.dart';
 import 'package:mozzi/domain/run/run_session.dart';
-import 'package:mozzi/domain/sim/accuracy_gauge.dart';
+import 'package:mozzi/domain/services/sound_service.dart';
 import 'package:mozzi/domain/sim/fixed_stepper.dart';
 import 'package:mozzi/domain/sim/flight_simulator.dart';
 import 'package:mozzi/domain/sim/flight_state.dart';
@@ -28,6 +28,7 @@ import 'package:mozzi/game/input/flight_gesture.dart';
 import 'package:mozzi/game/input/play_input.dart';
 import 'package:mozzi/game/render/palette.dart';
 import 'package:mozzi/game/run_hud_bus.dart';
+import 'package:mozzi/game/run_presenter.dart';
 import 'package:mozzi/game/run_setup.dart';
 import 'package:mozzi/game/viewport/virtual_viewport.dart';
 
@@ -37,16 +38,16 @@ import 'package:mozzi/game/viewport/virtual_viewport.dart';
 /// 월드 좌표 = 미터 (x 오른쪽, y 아래가 +, 지표면 y = 0).
 class MozziGame extends FlameGame
     implements ParallaxSource, GaugeSource, ObjectSource, BossSource {
-  MozziGame({required this.formulas, required this._setup});
+  MozziGame({required this.formulas, required this._setup, this.sound});
 
   final BalanceFormulas formulas;
+
+  /// 효과음 (없으면 무음).
+  final SoundService? sound;
   RunSetup _setup;
 
   /// HUD 알림 (비행 상태·스테이지·보스·판 결과).
   final RunHudBus hud = RunHudBus();
-
-  /// 모찌가 당긴 벡터를 따라가는 비율 (샘플: 절반).
-  static const double _pullFollow = 0.5;
 
   late RunSession _session;
   late final FixedStepper _stepper;
@@ -55,12 +56,9 @@ class MozziGame extends FlameGame
   late final PlayInput _input;
   final GoalFlag _goal = GoalFlag();
   final GhostFlag _ghost = GhostFlag();
-  late final RunFx _fx;
+  late final RunPresenter _presenter;
   int _runSeed = 0;
-  int _seenSeeds = 0;
-  int _seenBounces = 0;
   double _clock = 0;
-  bool _wasOvercharged = false;
   VirtualViewport _viewport = const VirtualViewport(
     screenWidth: 960,
     screenHeight: 540,
@@ -145,7 +143,13 @@ class MozziGame extends FlameGame
       BossRival(this),
       _mochi,
     ]);
-    _fx = RunFx(world);
+    _presenter = RunPresenter(
+      fx: RunFx(world),
+      mochi: _mochi,
+      world: cfg.world,
+      samplePxPerMps: cfg.cameraBasePxPerM * cfg.simTimeScale,
+      sound: sound,
+    );
     resetRun(_setup);
   }
 
@@ -167,13 +171,13 @@ class MozziGame extends FlameGame
       stage: stage,
       runSeed: ++_runSeed,
       bossEase: setup.bossEase,
+      tutorialTrampM: setup.tutorialTrampM,
     );
     _goal
       ..goalM = stage?.targetM
       ..broken = false;
     _ghost.xM = setup.ghostM;
-    _seenSeeds = 0;
-    _seenBounces = 0;
+    _presenter.reset();
     _input
       ..reset()
       ..unlocks = setup.controls;
@@ -196,18 +200,13 @@ class MozziGame extends FlameGame
   void pointerUp() {
     _input.up(_clock);
     hud.pulling.value = false;
-    _wasOvercharged = false;
   }
 
   void _launchWith(LaunchDecision decision) {
     if (_session.state.phase != FlightPhase.ready) return;
     _session.launch(decision);
     hud.lastLaunch.value = decision;
-    _fx.launch(
-      at: _mochi.position,
-      r: _mochi.radiusM,
-      perfect: decision.judgement.grade == GaugeGrade.perfect,
-    );
+    _presenter.launched(decision, _mochi.position, _mochi.radiusM);
     _publish(0, force: true);
   }
 
@@ -229,54 +228,39 @@ class MozziGame extends FlameGame
   void update(double dt) {
     _clock += dt;
     _input.tick(dt, _clock);
-    final over = _input.pulling && _input.launch.isOvercharged;
-    if (over && !_wasOvercharged) unawaited(HapticFeedback.selectionClick());
-    _wasOvercharged = over;
     final before = _session.state.phase;
     final steps = _stepper.advance(dt);
     var goalNow = false;
     for (var i = 0; i < steps; i++) {
-      _fx.hits(_session.step(), _mochi.radiusM);
+      _presenter.hits(_session.step(), _session.stats, _mochi.radiusM);
       goalNow |= _session.goalJustCrossed;
     }
     if (goalNow) {
       _goal.broken = true;
-      _fx.goal(_goal.goalM!, camera.visibleWorldRect.height);
+      _presenter.fx.goal(_goal.goalM!, camera.visibleWorldRect.height);
     }
     final s = _session.state;
-    if (s.bounces > _seenBounces) _fx.dust(s, _mochi.radiusM);
-    _seenBounces = s.bounces;
-    final seeds = _session.stats.seedsPicked;
-    if (seeds > _seenSeeds) _mochi.gulp();
-    _seenSeeds = seeds;
-    _mochi
-      ..rim = backdropPalette.rim
-      ..syncFrom(s)
-      ..setControls(inflating: s.inflating, diving: s.diving);
-    _applyPull();
-    if (s.boosting && steps > 0) {
-      _fx.boosting(s, _mochi.position, _mochi.radiusM);
-    }
+    _presenter
+      ..frame(
+        s,
+        _session.stats,
+        dt: dt,
+        stepped: steps > 0,
+        rim: backdropPalette.rim,
+        newRecord: hud.result.value?.isNewRecord,
+      )
+      ..pull(
+        _input.launch,
+        pulling: _input.pulling,
+        pxPerM: _rig.pxPerM,
+        stillReady: s.phase == FlightPhase.ready,
+      );
     _rig.update(s, _viewport, dt);
     camera.viewfinder
       ..zoom = _viewport.scale * _rig.pxPerM
       ..position = Vector2(_rig.focusX, 0);
     _publish(dt, force: s.phase != before || goalNow);
     super.update(dt);
-  }
-
-  /// 당기는 동안 모찌를 당긴 쪽으로 끌고 늘인다 (가상 px → m: 발사 전 배율 = 기본 배율).
-  void _applyPull() {
-    final launch = _input.launch;
-    final pullingNow = _input.pulling;
-    final (px, py) = launch.pull;
-    final toM = _pullFollow / _rig.pxPerM;
-    _mochi.setPull(
-      offsetXM: pullingNow ? px * toM : 0,
-      offsetYM: pullingNow ? py * toM : 0,
-      stretch: pullingNow ? launch.stretch : 0,
-      trembling: pullingNow && launch.isOvercharged,
-    );
   }
 
   void _publish(double dt, {required bool force}) {

@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 import 'package:mozzi/domain/balance/stage_spec.dart';
 import 'package:mozzi/domain/balance/upgrade_levels.dart';
+import 'package:mozzi/domain/onboarding/onboarding.dart';
 import 'package:mozzi/game/input/play_input.dart';
 
 /// 한 판 시작 조건 (진행 상태에서 app 이 만들어 넘긴다).
@@ -12,6 +13,8 @@ class RunSetup {
     this.bossEase = 0,
     this.ghostM,
     this.controls = ControlUnlocks.all,
+    this.tutorialTrampM,
+    this.hint,
   });
 
   /// 도전할 스테이지 (null = 자유 비행, 개발용).
@@ -26,4 +29,10 @@ class RunSetup {
 
   /// 볼 부풀리기·급강하 해금 (1-5 클리어 보상).
   final ControlUnlocks controls;
+
+  /// 온보딩 1판 트램폴린 위치 (GDD §9). 없으면 null.
+  final double? tutorialTrampM;
+
+  /// 이번 판 온보딩 안내 (GDD §9).
+  final OnboardingHint? hint;
 }

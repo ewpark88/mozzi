@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mozzi/domain/run/run_result.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/ui/app_theme.dart';
 import 'package:mozzi/ui/result/result_buttons.dart';
 import 'package:mozzi/ui/strings.dart';
 
@@ -28,6 +29,7 @@ class ResultPanel extends StatelessWidget {
     final title = TextStyle(
       fontSize: 24 * scale,
       fontWeight: FontWeight.bold,
+      fontFamily: AppFonts.title,
       color: r.bossLost ? BossPalette.lost : MochiPalette.outline,
     );
     final body = TextStyle(fontSize: 15 * scale, color: MochiPalette.outline);

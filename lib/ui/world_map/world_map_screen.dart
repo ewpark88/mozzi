@@ -4,6 +4,7 @@ import 'package:mozzi/domain/balance/stage_spec.dart';
 import 'package:mozzi/domain/progress/player_progress.dart';
 import 'package:mozzi/domain/progress/stage_unlocks.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/ui/app_theme.dart';
 import 'package:mozzi/ui/play/hud_scale.dart';
 import 'package:mozzi/ui/strings.dart';
 import 'package:mozzi/ui/world_map/widgets/world_row.dart';
@@ -104,6 +105,7 @@ class _Header extends StatelessWidget {
     final text = TextStyle(
       fontSize: 18 * scale,
       fontWeight: FontWeight.bold,
+      fontFamily: AppFonts.title,
       color: MochiPalette.outline,
     );
     return Row(

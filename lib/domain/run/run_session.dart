@@ -23,6 +23,7 @@ class RunSession {
     required int runSeed,
     ObjectField? field,
     double bossEase = 0,
+    double? tutorialTrampM,
   }) : sim = FlightSimulator(FlightParams.fromLevels(formulas, levels)),
        boss = BossRule.forStage(stage, formulas.config, ease: bossEase),
        field =
@@ -35,6 +36,7 @@ class RunSession {
                  stage,
                  formulas.config,
                  runSeed: runSeed,
+                 tutorialTrampM: tutorialTrampM,
                ),
              ),
            ) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mozzi/domain/balance/stage_spec.dart';
 import 'package:mozzi/domain/progress/stage_record.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/ui/app_theme.dart';
 import 'package:mozzi/ui/strings.dart';
 
 /// 월드맵의 스테이지 칸: 번호, 별 3개, 보스 표시. 잠기면 회색·자물쇠.
@@ -34,6 +35,7 @@ class StageNode extends StatelessWidget {
     final text = TextStyle(
       fontSize: 13 * scale,
       fontWeight: FontWeight.bold,
+      fontFamily: AppFonts.title,
       color: MochiPalette.outline,
     );
     return GestureDetector(

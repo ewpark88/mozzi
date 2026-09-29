@@ -13,39 +13,12 @@ import 'package:mozzi/ui/play/boss_hud.dart';
 import 'package:mozzi/ui/play/dev_panel.dart';
 import 'package:mozzi/ui/play/flight_hud.dart';
 import 'package:mozzi/ui/play/hud_scale.dart';
+import 'package:mozzi/ui/play/play_hooks.dart';
 import 'package:mozzi/ui/play/play_hud.dart';
 import 'package:mozzi/ui/play/stage_hud.dart';
 import 'package:mozzi/ui/result/result_buttons.dart';
 import 'package:mozzi/ui/result/result_panel.dart';
 import 'package:mozzi/ui/strings.dart';
-
-/// 진행 상태와 연결되는 플레이 화면 동작 (app 이 Provider 로 구현해 넘긴다).
-class PlayHooks {
-  const PlayHooks({
-    required this.setupFor,
-    required this.onRunEnd,
-    required this.nextStageOf,
-    required this.onMap,
-    required this.onUpgrades,
-    this.onAdDouble,
-    this.adMultiplier = 2,
-  });
-
-  /// 스테이지 시작 조건 (레벨·보스 완화·고스트 깃발·조작 해금).
-  final RunSetup Function(StageSpec? stage) setupFor;
-
-  /// 판이 끝남: 보상·기록 저장.
-  final void Function(RunResult result) onRunEnd;
-
-  /// 클리어 후 이어서 할 스테이지 (열려 있지 않으면 null).
-  final StageSpec? Function(StageSpec stage) nextStageOf;
-  final VoidCallback onMap;
-  final Future<void> Function() onUpgrades;
-
-  /// 씨앗 2배 광고. 보상을 받았으면 true. 광고를 쓸 수 없으면 null.
-  final Future<bool> Function(RunResult result)? onAdDouble;
-  final double adMultiplier;
-}
 
 /// 한 판 플레이 화면: 당기기(게이지) → 발사 → 비행 → 정지 → 결과 화면 (GDD §2, §4).
 ///
@@ -84,7 +57,11 @@ class _PlayScreenState extends State<PlayScreen> {
   @override
   void initState() {
     super.initState();
-    _game = MozziGame(formulas: widget.formulas, setup: _setupFor(_stage));
+    _game = MozziGame(
+      formulas: widget.formulas,
+      setup: _setupFor(_stage),
+      sound: widget.hooks.sound,
+    );
     _game.hud.result.addListener(_onResult);
   }
 
@@ -131,6 +108,11 @@ class _PlayScreenState extends State<PlayScreen> {
     setState(() => _adClaimed = true);
   }
 
+  void _claimFree() {
+    widget.hooks.onClaimFreeUpgrade?.call();
+    _start(_stage);
+  }
+
   Future<void> _upgrades() async {
     await widget.hooks.onUpgrades();
     if (mounted) _start(_stage);
@@ -141,7 +123,13 @@ class _PlayScreenState extends State<PlayScreen> {
     final next = r.cleared && stage != null
         ? widget.hooks.nextStageOf(stage)
         : null;
+    final free = widget.hooks.freeUpgrade?.call();
     return ResultActions(
+      freeUpgrade: free == null
+          ? null
+          : Strings.freeUpgrade(Strings.upgradeName(free.configKey)),
+      onFreeUpgrade: free == null ? null : _claimFree,
+      adHighlight: widget.hooks.highlightAdOffer?.call() ?? false,
       onRetry: () => _start(_stage),
       onMap: widget.hooks.onMap,
       onUpgrades: () => unawaited(_upgrades()),
@@ -234,6 +222,7 @@ class _PlayScreenState extends State<PlayScreen> {
           pulling: hud.pulling.value,
           lastLaunch: last,
           scale: scale,
+          hint: _game.setup.hint,
         ),
         if (state.phase == FlightPhase.ready)
           Positioned(
