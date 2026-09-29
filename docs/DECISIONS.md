@@ -128,6 +128,18 @@
   6. 월드맵은 월드 1~3 만(`StageUnlocks.playableWorlds`, P11 에서 5). 결과 화면에서 업그레이드 후 돌아오면 새 판을 바로 준비한다.
 - 결과: 페이싱 시트 재현은 그대로(거리 씨앗 공식 불변). 보스 수치는 시트 값이라 플레이테스트 후 시트만 고치면 된다. GDD 추가 제안 G22·G23.
 
+## ADR-018 2.5D 렌더링은 Canvas 그라데이션 + Picture 캐시 (FragmentShader 없음)
+- 날짜: 2026-09-29 · 상태: 채택 (P7, 사용자 승인)
+- 맥락: DEV_PLAN P7 은 면 그라데이션·림라이트·스페큘러를 FragmentShader 로, Canvas 를 대체 경로로 계획했다. 시각 기준 샘플(`모찌 런처 2.5D.html`)은 전부 Canvas 방사형 그라데이션(`radial`·`softSpot`)으로 2.5D 질감을 낸다.
+- 결정:
+  - 셰이딩 7단계를 Canvas `Gradient.radial`(초점 원 포함)로 샘플 그대로 옮긴다 (`game/render/shade.dart`, `mochi/`). 셰이더 컴파일·로드 실패 위험과 대체 경로 이중 유지를 없앤다.
+  - 성능: 그라데이션이 많은 몸은 (자세·볼 크기 0.05 단계·림 색·저사양) 별로 `Picture` 캐시(`MochiBodyCache`, 최대 24개), 얼굴은 매 프레임 가볍게.
+  - 저사양 모드 = 털 스트로크·배경 대기 안개·해 글로우 끔. 기본값 RC `render_low_spec`(시트 「설정」 74행).
+  - 색은 `game/render/palette.dart` 한 곳 (game·ui 는 app 을 import 할 수 없어 `app/theme` 대신).
+  - 표정 9종은 그리기·갤러리까지. 언제 어떤 표정인지는 P8 상태 머신 (`domain/character/MochiExpression`).
+  - DoD “셰이더 로드 실패 시 대체 경로 테스트” → “저사양 경로 테스트”.
+- 결과: 테스트 환경에서도 같은 경로로 그려져 표정 9종 × 자세 × 저사양을 전부 검증. GDD §10 캐릭터 렌더링 문구 수정 제안 G24.
+
 ## ADR-007 Android applicationId `com.repo.mozzi`, flavor dev/prod
 - 날짜: 2026-09-28 · 상태: 채택
 - 결정: prod `com.repo.mozzi`, dev `com.repo.mozzi.dev`. iOS 는 v1.0 이후 구성.

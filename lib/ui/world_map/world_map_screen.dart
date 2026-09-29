@@ -16,6 +16,7 @@ class WorldMapScreen extends StatelessWidget {
     required this.progress,
     required this.onStage,
     required this.onUpgrades,
+    this.onGallery,
     super.key,
   });
 
@@ -23,6 +24,9 @@ class WorldMapScreen extends StatelessWidget {
   final PlayerProgress progress;
   final ValueChanged<StageSpec> onStage;
   final VoidCallback onUpgrades;
+
+  /// 개발용 갤러리 (dev flavor 에서만 넘긴다).
+  final VoidCallback? onGallery;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +48,7 @@ class WorldMapScreen extends StatelessWidget {
                     maxStars: stages.length * 3,
                     seeds: progress.wallet.seeds,
                     onUpgrades: onUpgrades,
+                    onGallery: onGallery,
                     scale: scale,
                   ),
                   SizedBox(height: 6 * scale),
@@ -83,6 +88,7 @@ class _Header extends StatelessWidget {
     required this.maxStars,
     required this.seeds,
     required this.onUpgrades,
+    required this.onGallery,
     required this.scale,
   });
 
@@ -90,6 +96,7 @@ class _Header extends StatelessWidget {
   final int maxStars;
   final int seeds;
   final VoidCallback onUpgrades;
+  final VoidCallback? onGallery;
   final double scale;
 
   @override
@@ -102,6 +109,8 @@ class _Header extends StatelessWidget {
     return Row(
       children: [
         Text(Strings.appTitle, style: text.copyWith(fontSize: 22 * scale)),
+        if (onGallery != null)
+          TextButton(onPressed: onGallery, child: const Text(Strings.gallery)),
         const Spacer(),
         Text(Strings.totalStars(stars, maxStars), style: text),
         SizedBox(width: 16 * scale),

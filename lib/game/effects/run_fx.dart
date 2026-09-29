@@ -32,6 +32,10 @@ class RunFx {
     ParticleEffects.boostFlame(at, r, math.atan2(-s.vyMps, s.vxMps), _rnd),
   );
 
+  /// 착지·튕김 먼지 퍼프 (GDD §3 이펙트: 부피감 있는 퍼프).
+  void dust(FlightState s, double r) =>
+      _add(ParticleEffects.dustPuff(Vector2(s.xM, 0), r, s.vxMps, _rnd));
+
   /// 오브젝트 적중 반짝 (씨앗 노랑), 급강하 퍼펙트는 진동.
   void hits(List<ObjectHit> hits, double mochiR) {
     for (final h in hits) {

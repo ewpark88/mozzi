@@ -79,4 +79,9 @@ abstract final class Strings {
   static String upgradeLevel(int lv) => 'Lv $lv';
   static String upgradeCost(int cost) => '씨앗 $cost';
   static const back = '돌아가기';
+
+  // 개발용 갤러리 (P7)
+  static const gallery = '모찌 갤러리';
+  static const galleryFly = '비행 자세';
+  static const galleryLowSpec = '저사양 모드';
 }

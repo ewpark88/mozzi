@@ -68,6 +68,7 @@
   "boost_cut_on_land": true,
   "gesture_tap_max_sec": 0.18,
   "ad_reward_multiplier": 2,
+  "render_low_spec": false,
   "zones": [
     {
       "id": 1,

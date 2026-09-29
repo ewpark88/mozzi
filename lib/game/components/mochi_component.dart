@@ -2,49 +2,69 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+import 'package:mozzi/domain/character/mochi_expression.dart';
 import 'package:mozzi/domain/sim/flight_state.dart';
+import 'package:mozzi/game/render/mochi/mochi_cache.dart';
+import 'package:mozzi/game/render/mochi/mochi_deform.dart';
+import 'package:mozzi/game/render/mochi/mochi_face.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/game/render/shade.dart';
 
-/// 모찌 플레이스홀더 (단색 파츠: 몸통·등 무늬·볼·눈). P7 에서 2.5D 셰이딩으로 교체.
+/// 2.5D 모찌 (GDD §3 2.5D 아트 디렉션·애니메이션 입력값, 샘플 drawHero·drawMochi).
 ///
-/// 위치는 비행 시뮬 상태를 그대로 따른다. 착지 찌그러짐은 시각 전용 스프링
-/// (게임 판정에 영향 없음, GDD §3 말랑 표현).
+/// 위치는 비행 시뮬 상태를 그대로 따른다. 찌그러짐·볼 출렁임은 시각 전용 스프링
+/// (게임 판정에 영향 없음). 그림은 샘플 단위(몸 반지름 38)로 그리고 [radiusM] 에 맞춰 줄인다.
 class MochiComponent extends PositionComponent {
-  MochiComponent({required this.radiusM})
-    : super(anchor: Anchor.center, size: Vector2.all(radiusM * 2));
+  MochiComponent({
+    required this.radiusM,
+    required this.pxPerM,
+    required this.timeScale,
+    MochiBodyCache? cache,
+  }) : _cache = cache ?? MochiBodyCache(),
+       super(anchor: Anchor.center, size: Vector2.all(radiusM * 2));
 
   /// 몸통 반지름 (m). 2.5D 샘플 RAD 38px 을 기본 카메라 배율로 환산한 값.
   final double radiusM;
 
-  static const double _springK = 180;
-  static const double _springDamping = 14;
-  static const double _landingSquash = -0.35;
+  /// 기본 카메라 배율(가상 px/m)·시뮬 재생 배율 — 속도를 샘플 단위로 바꾸는 데 쓴다.
+  final double pxPerM;
+  final double timeScale;
 
-  double _squash = 0;
-  double _squashV = 0;
+  final MochiBodyCache _cache;
+  final MochiFace _face = MochiFace();
+  final Paint _shadow = Paint();
+
+  /// 표정 (P8 상태 머신이 정한다. 그 전에는 기본).
+  MochiExpression expression = MochiExpression.idle;
+
+  /// 월드 림라이트 색 (GDD §3 광원: 월드별 조명).
+  Color rim = MochiPalette.rimLight;
+
+  /// 저사양 모드: 털 질감 끔 (GDD §3 성능).
+  bool lowSpec = false;
+
+  static const double _landingSquash = 0.35;
+  static const double _puffCheek = 1.35;
+  static const double _blinkEverySec = 3.2;
+  static const double _blinkSec = 0.12;
+
+  final VisualSpring _squash = VisualSpring(k: 260, damping: 11);
+  final VisualSpring _cheek = VisualSpring(k: 90, damping: 8, rest: 1);
   int _seenBounces = 0;
   double _spin = 0;
+  double _clock = 0;
+  FlightState _state = FlightState.initial;
 
-  /// 당기기 변형: 당긴 방향(라디안, 월드 좌표)·늘어남 0~1·과충전 떨림.
   double _pullAngle = 0;
   double _stretch = 0;
-  bool _trembling = false;
-  double _clock = 0;
-
-  /// 비행 조작 연출 (GDD §3 빵빵 표정·§2 급강하). 0~1 로 부드럽게 전환.
-  double _puff = 0;
-  double _dive = 0;
   bool _inflating = false;
   bool _diving = false;
+  double _dive = 0;
 
-  final Paint _body = Paint()..color = MochiPalette.body;
-  final Paint _patch = Paint()..color = MochiPalette.backPatch;
-  final Paint _blush = Paint()
-    ..color = MochiPalette.blush.withValues(alpha: 0.8);
-  final Paint _eye = Paint()..color = MochiPalette.eye;
-  final Paint _outline = Paint()
-    ..color = MochiPalette.outline
-    ..style = PaintingStyle.stroke;
+  double get _unitsPerM => MochiDeform.unitR / radiusM;
+
+  /// 볼 스프링 값 (테스트·연출용).
+  double get cheek => _cheek.value;
 
   /// 당기는 중 변형 (GDD §2 “드래그 거리만큼 늘어남”). [offsetXM]/[offsetYM] 은 당긴 쪽으로
   /// 끌려간 위치 (월드 m, y 아래 +). 샘플처럼 당긴 벡터의 절반만큼 따라간다.
@@ -55,99 +75,128 @@ class MochiComponent extends PositionComponent {
     required bool trembling,
   }) {
     _stretch = stretch;
-    _trembling = trembling;
     if (stretch > 0) {
       _pullAngle = math.atan2(offsetYM, offsetXM);
-      final shake = trembling ? math.sin(_clock * 70) * radiusM * 0.04 : 0.0;
+      final shake = trembling ? math.sin(_clock * 80) * radiusM * 0.05 : 0.0;
       position.add(Vector2(offsetXM + shake, offsetYM));
     }
   }
 
-  /// 비행 조작 상태 (볼 부풀리기 → 볼이 빵빵, 급강하 → 회전 멈추고 길쭉).
+  /// 비행 조작 상태 (볼 부풀리기 → 볼 빵빵, 급강하 → 회전 멈추고 길쭉).
   void setControls({required bool inflating, required bool diving}) {
     _inflating = inflating;
     _diving = diving;
   }
 
+  /// 씨앗을 먹으면 볼이 출렁인다 (GDD §3 볼 스프링).
+  void gulp() => _cheek.velocity += 3;
+
   /// 시뮬 상태를 반영한다 (월드 좌표: x 오른쪽, y 아래가 +).
   void syncFrom(FlightState s) {
+    _state = s;
     position.setValues(s.xM, -(s.yM + radiusM));
     if (s.bounces > _seenBounces) {
       _seenBounces = s.bounces;
-      _squash = _landingSquash;
-      _squashV = 0;
+      _squash
+        ..value = _landingSquash
+        ..velocity = 0;
     }
     if (s.phase == FlightPhase.ready) {
       _seenBounces = 0;
       _spin = 0;
     }
-    angle = s.isAirborne && !_diving ? _spin : 0;
+    angle = 0;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    _squashV += (-_springK * _squash - _springDamping * _squashV) * dt;
-    _squash += _squashV * dt;
-    _spin += dt * 2.2;
+    _squash.step(dt);
+    _cheek.step(dt);
+    if (_inflating && _cheek.value < _puffCheek) {
+      _cheek.value += (_puffCheek - _cheek.value) * math.min(1, dt * 10);
+    }
+    if (_state.isAirborne && !_diving) _spin += dt * 2.2;
     _clock += dt;
-    final k = 1 - math.exp(-12 * dt);
-    _puff += ((_inflating ? 1 : 0) - _puff) * k;
-    _dive += ((_diving ? 1 : 0) - _dive) * k;
+    _dive += ((_diving ? 1 : 0) - _dive) * (1 - math.exp(-12 * dt));
   }
 
   @override
   void render(Canvas canvas) {
-    final r = radiusM;
-    final c = Offset(r, r);
-    // 찌그러짐: 세로로 눌리면 가로로 퍼진다 (부피 유지 근사)
-    final sy = 1 + _squash;
-    final sx = 1 / math.max(sy, 0.4);
+    final u = radiusM / MochiDeform.unitR;
+    final s = _state;
+    final grounded = !s.isAirborne && s.phase != FlightPhase.ready;
+    final speed = math.sqrt(s.vxMps * s.vxMps + s.vyMps * s.vyMps);
+    final d = MochiDeform.of(
+      stretch: _stretch,
+      stretchAngle: _pullAngle,
+      speedUnits: s.isAirborne ? speed * pxPerM * timeScale : 0,
+      velocityAngle: math.atan2(-s.vyMps, s.vxMps),
+      squash: grounded || s.phase == FlightPhase.ready ? -_squash.value : 0,
+      breath: s.phase == FlightPhase.ready && _stretch == 0
+          ? math.sin(_clock * 2.2) * .025
+          : 0,
+      heightUnits: s.yM * _unitsPerM,
+    );
     canvas
       ..save()
-      ..translate(c.dx, c.dy + r * (1 - sy));
-    if (_stretch > 0) {
-      // 당긴 방향으로 늘어나고 옆으로 가늘어진다 (과충전이면 더)
-      final along = 1 + 0.45 * _stretch;
-      final across = 1 - (_trembling ? 0.22 : 0.18) * _stretch;
-      canvas
-        ..rotate(_pullAngle)
-        ..scale(along, across)
-        ..rotate(-_pullAngle);
-    }
-    // 부풀리면 옆으로 빵빵, 급강하면 세로로 길쭉
-    canvas.scale(
-      sx * (1 + 0.15 * _puff) * (1 - 0.15 * _dive),
-      sy * (1 + 0.05 * _puff) * (1 + 0.25 * _dive),
-    );
-    final bodyRect = Rect.fromCenter(
-      center: Offset.zero,
-      width: r * 2.1,
-      height: r * 2,
-    );
-    _outline.strokeWidth = r * 0.09;
+      ..translate(radiusM, radiusM);
+    _groundShadow(canvas, d, u);
     canvas
-      ..drawOval(bodyRect, _body)
-      ..drawArc(
-        bodyRect.deflate(r * 0.05),
-        math.pi * 1.05,
-        math.pi * 0.7,
-        false,
-        _patch..style = PaintingStyle.fill,
-      )
-      ..drawOval(bodyRect, _outline)
-      ..drawCircle(
-        Offset(-r * 0.55, r * 0.25),
-        r * (0.28 + 0.12 * _puff),
-        _blush,
-      )
-      ..drawCircle(
-        Offset(r * 0.55, r * 0.25),
-        r * (0.28 + 0.12 * _puff),
-        _blush,
-      )
-      ..drawCircle(Offset(-r * 0.32, -r * 0.05), r * 0.11, _eye)
-      ..drawCircle(Offset(r * 0.32, -r * 0.05), r * 0.11, _eye)
+      ..scale(u)
+      ..translate(0, d.liftUnits);
+    if (d.along != 1) {
+      canvas
+        ..rotate(d.axisAngle)
+        ..scale(d.along, d.across)
+        ..rotate(-d.axisAngle);
+    }
+    canvas
+      ..scale(d.scaleX, d.scaleY)
+      ..rotate(d.lean + (s.isAirborne && !_diving ? _spin : 0))
+      ..scale(1 - .12 * _dive, 1 + .2 * _dive)
+      ..drawPicture(
+        _cache.body(
+          fly: s.isAirborne,
+          cheek: _cheek.value,
+          rim: rim,
+          lowSpec: lowSpec,
+        ),
+      );
+    _face.paint(
+      canvas,
+      _inflating ? MochiExpression.puff : expression,
+      t: _clock,
+      blink: _clock % _blinkEverySec < _blinkSec,
+    );
+    canvas.restore();
+  }
+
+  /// 소프트 타원 그림자: 높이 날수록 작고 연해지고, 찌그러지면 넓어진다.
+  void _groundShadow(Canvas canvas, MochiDeform d, double u) {
+    final groundY = _state.yM + radiusM;
+    _shadow.shader = Shade.radial(
+      Offset(0, groundY),
+      0,
+      Offset(0, groundY),
+      d.shadowWidth * u,
+      [
+        (0, Shade.alpha(MochiPalette.groundShadow, d.shadowAlpha)),
+        (1, Shade.alpha(MochiPalette.groundShadow, 0)),
+      ],
+    );
+    canvas
+      ..save()
+      ..translate(0, groundY)
+      ..scale(1, .28)
+      ..translate(0, -groundY)
+      ..drawCircle(Offset(0, groundY), d.shadowWidth * u, _shadow)
       ..restore();
+  }
+
+  @override
+  void onRemove() {
+    _cache.dispose();
+    super.onRemove();
   }
 }

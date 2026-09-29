@@ -3,7 +3,7 @@
 말랑한 햄스터 '모찌'를 당겨 달까지 날리는 하이브리드 캐주얼 게임. Flutter + Flame, Android 우선.
 1인 개발, **개발계획표(docs/DEV_PLAN.md)의 Phase 순서대로만** 진행한다.
 
-**현재 Phase: P7 — 2.5D 코드 렌더링** (P0~P6 완료. 진행 기록: docs/PROGRESS.md)
+**현재 Phase: P8 — 온보딩·표정·사운드 합성** (P0~P7 완료. 진행 기록: docs/PROGRESS.md)
 
 > **새 세션은 `docs/HANDOFF.md` 부터 읽는다** — 현재 상태, 사용자와 합의한 작업 방식, 코드 지도, 도구·환경 주의점, 열린 항목.
 

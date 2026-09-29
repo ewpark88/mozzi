@@ -57,6 +57,8 @@ class MozziGame extends FlameGame
   final GhostFlag _ghost = GhostFlag();
   late final RunFx _fx;
   int _runSeed = 0;
+  int _seenSeeds = 0;
+  int _seenBounces = 0;
   double _clock = 0;
   bool _wasOvercharged = false;
   VirtualViewport _viewport = const VirtualViewport(
@@ -88,6 +90,12 @@ class MozziGame extends FlameGame
   );
 
   @override
+  bool get lowSpec => formulas.config.renderLowSpec;
+
+  @override
+  Color get rimColor => backdropPalette.rim;
+
+  @override
   ObjectField get objectField => _session.field;
 
   @override
@@ -117,7 +125,11 @@ class MozziGame extends FlameGame
       basePxPerM: cfg.cameraBasePxPerM,
       timeScale: cfg.simTimeScale,
     );
-    _mochi = MochiComponent(radiusM: cfg.mochiRadiusM);
+    _mochi = MochiComponent(
+      radiusM: cfg.mochiRadiusM,
+      pxPerM: cfg.cameraBasePxPerM,
+      timeScale: cfg.simTimeScale,
+    )..lowSpec = cfg.renderLowSpec;
     camera.viewfinder.anchor = const Anchor(
       VirtualViewport.focusXRatio,
       VirtualViewport.groundLineRatio,
@@ -160,6 +172,8 @@ class MozziGame extends FlameGame
       ..goalM = stage?.targetM
       ..broken = false;
     _ghost.xM = setup.ghostM;
+    _seenSeeds = 0;
+    _seenBounces = 0;
     _input
       ..reset()
       ..unlocks = setup.controls;
@@ -230,7 +244,13 @@ class MozziGame extends FlameGame
       _fx.goal(_goal.goalM!, camera.visibleWorldRect.height);
     }
     final s = _session.state;
+    if (s.bounces > _seenBounces) _fx.dust(s, _mochi.radiusM);
+    _seenBounces = s.bounces;
+    final seeds = _session.stats.seedsPicked;
+    if (seeds > _seenSeeds) _mochi.gulp();
+    _seenSeeds = seeds;
     _mochi
+      ..rim = backdropPalette.rim
       ..syncFrom(s)
       ..setControls(inflating: s.inflating, diving: s.diving);
     _applyPull();

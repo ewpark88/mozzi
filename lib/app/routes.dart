@@ -6,6 +6,7 @@ import 'package:mozzi/app/progress_controller.dart';
 import 'package:mozzi/app/providers.dart';
 import 'package:mozzi/domain/balance/stage_spec.dart';
 import 'package:mozzi/domain/progress/stage_unlocks.dart';
+import 'package:mozzi/ui/dev/mochi_gallery_screen.dart';
 import 'package:mozzi/ui/play/play_screen.dart';
 import 'package:mozzi/ui/upgrade/upgrade_screen.dart';
 import 'package:mozzi/ui/world_map/world_map_screen.dart';
@@ -25,6 +26,16 @@ class WorldMapRoute extends ConsumerWidget {
       ),
     ),
     onUpgrades: () => unawaited(openUpgrades(context)),
+    onGallery: ref.watch(appEnvProvider).isDev
+        ? () => unawaited(
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (c) =>
+                    MochiGalleryScreen(onBack: () => Navigator.of(c).pop()),
+              ),
+            ),
+          )
+        : null,
   );
 }
 

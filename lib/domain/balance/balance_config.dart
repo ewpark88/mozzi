@@ -70,6 +70,7 @@ class BalanceConfig {
     required this.controls,
     required this.mochiRadiusPx,
     required this.adRewardMultiplier,
+    required this.renderLowSpec,
     required this.world,
     required List<ZoneSpec> zones,
   }) : upgrades = Map.unmodifiable(upgrades),
@@ -99,6 +100,7 @@ class BalanceConfig {
       controls: FlightControlSpec.fromJson(r),
       mochiRadiusPx: r.number('mochi_radius_px'),
       adRewardMultiplier: r.number('ad_reward_multiplier'),
+      renderLowSpec: r.boolean('render_low_spec'),
       world: WorldConfig.fromJson(r),
       zones: r.objectList('zones').map(ZoneSpec.fromJson).toList(),
     );
@@ -139,6 +141,9 @@ class BalanceConfig {
 
   /// `ad_reward_multiplier` 결과 화면 보상형 광고 씨앗 배율 (GDD §7).
   final double adRewardMultiplier;
+
+  /// `render_low_spec` 저사양 모드 기본값: 털 질감·배경 흐림 끔 (GDD §3 성능).
+  final bool renderLowSpec;
 
   /// 월드·스테이지·오브젝트 (GDD §4).
   final WorldConfig world;

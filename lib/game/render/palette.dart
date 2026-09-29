@@ -11,6 +11,28 @@ abstract final class MochiPalette {
   static const shade = Color(0xFFE8C9A0);
   static const occlusion = Color(0xFFC99A6B);
   static const rimLight = Color(0xFFBFE6F5);
+
+  // 2.5D 셰이딩 (샘플 SKINS.mochi)
+  static const lineDeep = Color(0xFF8A5E3B);
+  static const coreShadow = Color(0xFFB07845);
+  static const earInner = Color(0xFFFF9EAA);
+  static const blushSoft = Color(0xFFFF8FA0);
+  static const nose = Color(0xFFFF8FA0);
+  static const specular = Color(0xFFFFFFFF);
+  static const groundShadow = Color(0xFF3A2A1A);
+
+  // 얼굴 (샘플 drawFace)
+  static const mouth = Color(0xFF7A3B2E);
+  static const tongue = Color(0xFFFF7A8A);
+  static const sweat = Color(0xFF8FD3F0);
+  static const starEye = Color(0xFFFFC93C);
+  static const starEyeLine = Color(0xFF8A5A00);
+  static const snort = Color(0xFFE7F3F8);
+  static const snortLine = Color(0xFF9AB7C4);
+  static const pupilCore = Color(0xFF5A3A2A);
+  static const pupilMid = Color(0xFF231816);
+  static const pupilEdge = Color(0xFF120C0B);
+  static const eyeGlint = Color(0x8CFFDCBE);
 }
 
 /// 월드 1 뒷마당 플레이스홀더 색 (P7 에서 2.5D 셰이딩·구역 조명으로 교체).
@@ -60,6 +82,9 @@ abstract final class FxPalette {
   /// 연료 게이지 (샘플 drawFuel).
   static const fuel = Color(0xFFFF7A3D);
   static const fuelEmpty = Color(0xFFC9B9A6);
+
+  /// 착지 먼지 퍼프 (샘플 dust #E4D2B4).
+  static const dust = Color(0xFFE4D2B4);
 }
 
 /// 오브젝트 플레이스홀더 색 (P7 에서 2.5D 셰이딩으로 교체).
@@ -112,38 +137,59 @@ abstract final class BossPalette {
   static const star = Color(0xFFF5B301);
 }
 
-/// 월드별 배경 색 (GDD §3 구역별 조명: 뒷마당 아침, 도시 노을). P7 에서 대기 원근·조명으로 확장.
+/// 월드별 조명·배경 색 (GDD §3 광원: 월드별 조명 색, 샘플 LIGHTS day·dusk).
+/// 뒷마당 따뜻한 아침, 공원 맑은 낮, 도시 노을. 월드 4~6 은 P11.
 class WorldPalette {
   const WorldPalette({
     required this.skyTop,
     required this.skyBottom,
+    required this.sun,
+    required this.rim,
     required this.far,
+    required this.cloudShade,
     required this.mid,
+    required this.midDeep,
     required this.near,
+    required this.fence,
   });
 
   static const backyard = WorldPalette(
-    skyTop: BackyardPalette.skyTop,
-    skyBottom: BackyardPalette.skyBottom,
-    far: BackyardPalette.far,
-    mid: BackyardPalette.mid,
-    near: BackyardPalette.near,
+    skyTop: Color(0xFF6FC0E8),
+    skyBottom: Color(0xFFE6F6FB),
+    sun: Color(0xFFFFF1B8),
+    rim: Color(0xFFBFE6F5),
+    far: Color(0xFFA9CFE2),
+    cloudShade: Color(0xFFCFE2EE),
+    mid: Color(0xFFA2D98C),
+    midDeep: Color(0xFF7FC06E),
+    near: Color(0xFF6FB35F),
+    fence: Color(0xFFE9C79A),
   );
 
   static const park = WorldPalette(
     skyTop: Color(0xFF8FD3F4),
     skyBottom: Color(0xFFE6F6FF),
+    sun: Color(0xFFFFF4C8),
+    rim: Color(0xFFBFE6F5),
     far: Color(0xFFB5D8C4),
-    mid: Color(0xFF7FBF7F),
+    cloudShade: Color(0xFFD2E6EE),
+    mid: Color(0xFF9FD68A),
+    midDeep: Color(0xFF6FB866),
     near: Color(0xFF4F9D57),
+    fence: Color(0xFFD9B98A),
   );
 
   static const city = WorldPalette(
-    skyTop: Color(0xFFF6A96B),
-    skyBottom: Color(0xFFFCE3C1),
-    far: Color(0xFFC9A7B8),
-    mid: Color(0xFFA58AA0),
-    near: Color(0xFF7C6F8E),
+    skyTop: Color(0xFF4E4488),
+    skyBottom: Color(0xFFFFB27A),
+    sun: Color(0xFFFFD08A),
+    rim: Color(0xFFFF9E7A),
+    far: Color(0xFFB08BA8),
+    cloudShade: Color(0xFFD9A0A6),
+    mid: Color(0xFFA7B477),
+    midDeep: Color(0xFF80935A),
+    near: Color(0xFF6D8450),
+    fence: Color(0xFFE3B489),
   );
 
   /// 월드 번호 → 색 (월드 4~6 은 P11 전까지 도시 색).
@@ -170,15 +216,38 @@ class WorldPalette {
 
   final Color skyTop;
   final Color skyBottom;
-  final Color far;
-  final Color mid;
-  final Color near;
 
-  WorldPalette lerp(WorldPalette other, double t) => WorldPalette(
-    skyTop: Color.lerp(skyTop, other.skyTop, t)!,
-    skyBottom: Color.lerp(skyBottom, other.skyBottom, t)!,
-    far: Color.lerp(far, other.far, t)!,
-    mid: Color.lerp(mid, other.mid, t)!,
-    near: Color.lerp(near, other.near, t)!,
-  );
+  /// 해 (도시 노을은 주황 해).
+  final Color sun;
+
+  /// 모찌 림라이트 (우하단 반사광).
+  final Color rim;
+
+  /// 원경 산 (대기 원근: 흐리고 밝게).
+  final Color far;
+  final Color cloudShade;
+
+  /// 중경 언덕 위·아래.
+  final Color mid;
+  final Color midDeep;
+
+  /// 근경 덤불.
+  final Color near;
+  final Color fence;
+
+  WorldPalette lerp(WorldPalette o, double t) {
+    Color m(Color a, Color b) => Color.lerp(a, b, t)!;
+    return WorldPalette(
+      skyTop: m(skyTop, o.skyTop),
+      skyBottom: m(skyBottom, o.skyBottom),
+      sun: m(sun, o.sun),
+      rim: m(rim, o.rim),
+      far: m(far, o.far),
+      cloudShade: m(cloudShade, o.cloudShade),
+      mid: m(mid, o.mid),
+      midDeep: m(midDeep, o.midDeep),
+      near: m(near, o.near),
+      fence: m(fence, o.fence),
+    );
+  }
 }

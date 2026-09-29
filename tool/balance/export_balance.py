@@ -66,6 +66,7 @@ PHYS_KEYS = [
     "gesture_swipe_min_px",
     "gesture_swipe_max_sec",
     "ad_reward_multiplier",
+    "render_low_spec",
 ]
 
 

@@ -4,9 +4,73 @@ import 'package:flame/components.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/painting.dart';
 import 'package:mozzi/game/render/palette.dart';
+import 'package:mozzi/game/render/shade.dart';
 
 /// 파티클 연출 모음 (월드 좌표 = m, 크기는 모찌 반지름 `r`(m) 기준).
+/// 반짝이는 가산 블렌딩 글로우, 먼지는 부피감 있는 퍼프 (GDD §3 이펙트).
 abstract final class ParticleEffects {
+  /// 가산 블렌딩으로 빛나는 점: 가운데 흰빛 → [color] → 투명, 수명 동안 사라짐.
+  static Particle glow(double radius, Color color) {
+    final paint = Paint()..blendMode = BlendMode.plus;
+    return ComputedParticle(
+      renderer: (canvas, particle) {
+        final fade = 1 - particle.progress;
+        paint.shader = Shade.radial(Offset.zero, 0, Offset.zero, radius, [
+          (0, Shade.alpha(const Color(0xFFFFFFFF), fade)),
+          (.35, Shade.alpha(color, .9 * fade)),
+          (1, Shade.alpha(color, 0)),
+        ]);
+        canvas.drawCircle(Offset.zero, radius, paint);
+      },
+    );
+  }
+
+  /// 착지 먼지: 부드러운 방사형 퍼프가 커지며 옅어진다 (샘플 dust).
+  static ParticleSystemComponent dustPuff(
+    Vector2 at,
+    double r,
+    double vx,
+    math.Random rnd,
+  ) {
+    final paint = Paint();
+    return ParticleSystemComponent(
+      position: at.clone(),
+      particle: Particle.generate(
+        count: 6,
+        lifespan: 0.6,
+        generator: (i) {
+          final size = r * (0.25 + rnd.nextDouble() * 0.25);
+          return AcceleratedParticle(
+            position: Vector2((rnd.nextDouble() - 0.5) * r, 0),
+            speed: Vector2(
+              (rnd.nextDouble() - 0.5) * r * 3 + vx * 0.15,
+              -r * (1 + rnd.nextDouble() * 3),
+            ),
+            acceleration: Vector2(0, r * 4),
+            child: ComputedParticle(
+              renderer: (canvas, p) {
+                final k = p.progress;
+                final rr = size * (1 + k);
+                paint.shader = Shade.radial(
+                  Offset(-rr * .3, -rr * .3),
+                  0,
+                  Offset.zero,
+                  rr,
+                  [
+                    (0, Shade.alpha(FxPalette.dust, .8 * (1 - k))),
+                    (.6, Shade.alpha(FxPalette.dust, .5 * (1 - k))),
+                    (1, Shade.alpha(FxPalette.dust, 0)),
+                  ],
+                );
+                canvas.drawCircle(Offset.zero, rr, paint);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   /// PERFECT 발사: 노랑·흰 반짝이가 사방으로 (GDD §2 “이펙트와 진동”).
   static ParticleSystemComponent perfectBurst(
     Vector2 at,
@@ -25,10 +89,7 @@ abstract final class ParticleEffects {
           return AcceleratedParticle(
             speed: Vector2(math.cos(a) * v, math.sin(a) * v),
             acceleration: Vector2(0, r * 8),
-            child: CircleParticle(
-              radius: r * 0.12,
-              paint: Paint()..color = colors[i % colors.length],
-            ),
+            child: glow(r * 0.3, colors[i % colors.length]),
           );
         },
       ),
@@ -109,7 +170,7 @@ abstract final class ParticleEffects {
         final v = r * (3 + rnd.nextDouble() * 3);
         return AcceleratedParticle(
           speed: Vector2(math.cos(a) * v, math.sin(a) * v),
-          child: CircleParticle(radius: r * 0.1, paint: Paint()..color = color),
+          child: glow(r * 0.25, color),
         );
       },
     ),
