@@ -5,14 +5,13 @@ import 'package:mozzi/game/render/palette.dart';
 import 'package:mozzi/ui/play/grade_popup.dart';
 import 'package:mozzi/ui/strings.dart';
 
-/// 비행 중 HUD: 현재 거리, 발사 안내, 정지 후 재도전 버튼.
+/// 비행 중 HUD: 현재 거리, 발사 안내, 판정 팝업. 정지 후에는 결과 화면(ResultPanel).
 class PlayHud extends StatelessWidget {
   const PlayHud({
     required this.state,
     required this.pulling,
     required this.lastLaunch,
     required this.scale,
-    required this.onRetry,
     super.key,
   });
 
@@ -20,7 +19,6 @@ class PlayHud extends StatelessWidget {
   final bool pulling;
   final LaunchDecision? lastLaunch;
   final double scale;
-  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -43,24 +41,6 @@ class PlayHud extends StatelessWidget {
           alignment: const Alignment(-0.2, -0.1),
           child: GradePopup(decision: lastLaunch, scale: scale),
         ),
-        if (state.phase == FlightPhase.stopped)
-          Align(
-            alignment: const Alignment(0, 0.3),
-            child: FilledButton(
-              onPressed: onRetry,
-              style: FilledButton.styleFrom(
-                backgroundColor: MochiPalette.backPatch,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 28 * scale,
-                  vertical: 14 * scale,
-                ),
-              ),
-              child: Text(
-                Strings.retry,
-                style: TextStyle(fontSize: 20 * scale),
-              ),
-            ),
-          ),
       ],
     );
   }

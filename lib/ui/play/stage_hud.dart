@@ -6,7 +6,7 @@ import 'package:mozzi/game/run_hud_info.dart';
 import 'package:mozzi/ui/strings.dart';
 
 /// 스테이지 HUD (GDD §4): 오른쪽 위 스테이지·목표·★★★ 미션·씨앗·콤보,
-/// 정지하면 가운데에 별 결과. 결과 화면·보상은 P6.
+/// 판이 끝나면 결과 화면(ResultPanel)이 별·보상을 보여준다.
 class StageHud extends StatelessWidget {
   const StageHud({
     required this.info,
@@ -77,31 +77,6 @@ class StageHud extends StatelessWidget {
               ],
             ),
           ),
-          if (info.stars case final stars?)
-            Align(
-              alignment: const Alignment(0, -0.35),
-              child: _Card(
-                scale: scale,
-                maxWidth: 320,
-                children: [
-                  Text(
-                    stars.cleared ? Strings.cleared : Strings.notCleared,
-                    style: text.copyWith(fontSize: 22 * scale),
-                  ),
-                  Text(
-                    [
-                      stars.cleared,
-                      stars.star2,
-                      stars.star3,
-                    ].map((s) => s ? '★' : '☆').join(' '),
-                    style: text.copyWith(
-                      fontSize: 30 * scale,
-                      color: GaugePalette.goodDark,
-                    ),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );

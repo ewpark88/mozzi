@@ -3,13 +3,19 @@ import 'package:mozzi/domain/balance/stage_spec.dart';
 import 'package:mozzi/domain/balance/world_spec.dart';
 import 'package:mozzi/domain/world/object_kind.dart';
 
-/// 보스 공통·2-5 값 (GDD §4 보스 스테이지 상세, 시트 「스테이지」 보스 표).
+/// 보스 값 (GDD §4 보스 스테이지 상세, 시트 「스테이지」 보스 표). 시간은 실제 초.
 class BossSpec {
   const BossSpec({
     required this.rival25TimeSec,
     required this.rival25PigeonMult,
     required this.failEaseStep,
     required this.failEaseMax,
+    required this.cat15DelaySec,
+    required this.cat15TimeSec,
+    required this.rival25FountainMin,
+    required this.rival25FountainMax,
+    required this.crow35StealPerSec,
+    required this.crow35HitMeter,
   });
 
   factory BossSpec.fromJson(JsonReader r) => BossSpec(
@@ -17,12 +23,35 @@ class BossSpec {
     rival25PigeonMult: r.number('boss_2_5_pigeon_mult'),
     failEaseStep: r.number('boss_fail_ease_step'),
     failEaseMax: r.number('boss_fail_ease_max'),
+    cat15DelaySec: r.number('boss_1_5_cat_delay_sec'),
+    cat15TimeSec: r.number('boss_1_5_cat_time_sec'),
+    rival25FountainMin: r.integer('boss_2_5_fountain_min'),
+    rival25FountainMax: r.integer('boss_2_5_fountain_max'),
+    crow35StealPerSec: r.number('boss_3_5_steal_per_sec'),
+    crow35HitMeter: r.number('boss_3_5_crow_hit_meter'),
   );
 
+  /// 2-5 대장이 골까지 걸리는 시간.
   final double rival25TimeSec;
+
+  /// 2-5 코스 비둘기 비중 배율.
   final double rival25PigeonMult;
+
+  /// 3판 연속 실패마다 완화 단계, 최대 완화.
   final double failEaseStep;
   final double failEaseMax;
+
+  /// 1-5 고양이: 발사 후 출발 지연, 발사부터 골 도달까지 시간.
+  final double cat15DelaySec;
+  final double cat15TimeSec;
+
+  /// 2-5 코스에 고정 배치하는 분수 수 (최소~최대).
+  final int rival25FountainMin;
+  final int rival25FountainMax;
+
+  /// 3-5 까마귀 대장 게이지: 초당 상승, 까마귀 충돌 시 추가.
+  final double crow35StealPerSec;
+  final double crow35HitMeter;
 }
 
 /// 월드·스테이지·오브젝트 밸런스 (GDD §4). 시트 「스테이지」·「오브젝트」.

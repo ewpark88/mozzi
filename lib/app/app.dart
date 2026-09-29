@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mozzi/app/providers.dart';
-import 'package:mozzi/ui/play/play_screen.dart';
+import 'package:mozzi/app/routes.dart';
 import 'package:mozzi/ui/strings.dart';
 
-/// 앱 루트 위젯. 라우팅(월드맵·결과·업그레이드)은 P6 에서 확장한다 (docs/DEV_PLAN.md).
+/// 앱 루트 위젯. 첫 화면 = 월드맵 (화면 흐름은 routes.dart).
 class MozziApp extends ConsumerWidget {
   const MozziApp({super.key});
 
@@ -17,10 +17,7 @@ class MozziApp extends ConsumerWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF5A55C)),
       ),
-      home: PlayScreen(
-        formulas: ref.watch(balanceFormulasProvider),
-        isDev: env.isDev,
-      ),
+      home: const WorldMapRoute(),
     );
   }
 }

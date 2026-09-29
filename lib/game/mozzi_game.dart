@@ -2,12 +2,10 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:mozzi/domain/balance/balance_formulas.dart';
-import 'package:mozzi/domain/balance/stage_spec.dart';
-import 'package:mozzi/domain/balance/upgrade_levels.dart';
 import 'package:mozzi/domain/balance/world_config.dart';
+import 'package:mozzi/domain/run/boss/boss_rule.dart';
 import 'package:mozzi/domain/run/run_session.dart';
 import 'package:mozzi/domain/sim/accuracy_gauge.dart';
 import 'package:mozzi/domain/sim/fixed_stepper.dart';
@@ -16,8 +14,10 @@ import 'package:mozzi/domain/sim/flight_state.dart';
 import 'package:mozzi/domain/sim/launch_controller.dart';
 import 'package:mozzi/domain/world/chunk_generator.dart';
 import 'package:mozzi/game/camera/camera_rig.dart';
+import 'package:mozzi/game/components/boss_rival.dart';
 import 'package:mozzi/game/components/distance_markers.dart';
 import 'package:mozzi/game/components/gauge_component.dart';
+import 'package:mozzi/game/components/ghost_flag.dart';
 import 'package:mozzi/game/components/goal_flag.dart';
 import 'package:mozzi/game/components/ground_component.dart';
 import 'package:mozzi/game/components/mochi_component.dart';
@@ -27,7 +27,8 @@ import 'package:mozzi/game/effects/run_fx.dart';
 import 'package:mozzi/game/input/flight_gesture.dart';
 import 'package:mozzi/game/input/play_input.dart';
 import 'package:mozzi/game/render/palette.dart';
-import 'package:mozzi/game/run_hud_info.dart';
+import 'package:mozzi/game/run_hud_bus.dart';
+import 'package:mozzi/game/run_setup.dart';
 import 'package:mozzi/game/viewport/virtual_viewport.dart';
 
 /// 한 판을 화면에 보여주는 Flame 게임. 규칙은 전부 [RunSession](domain)에 있고,
@@ -35,28 +36,14 @@ import 'package:mozzi/game/viewport/virtual_viewport.dart';
 ///
 /// 월드 좌표 = 미터 (x 오른쪽, y 아래가 +, 지표면 y = 0).
 class MozziGame extends FlameGame
-    implements ParallaxSource, GaugeSource, ObjectSource {
-  MozziGame({required this.formulas, required this._levels, this._stage});
+    implements ParallaxSource, GaugeSource, ObjectSource, BossSource {
+  MozziGame({required this.formulas, required this._setup});
 
   final BalanceFormulas formulas;
-  UpgradeLevels _levels;
-  StageSpec? _stage;
+  RunSetup _setup;
 
-  /// HUD 용 비행 상태. 매 프레임이 아니라 [_hudInterval] 마다 / 단계가 바뀔 때 갱신.
-  final ValueNotifier<FlightState> flightState = ValueNotifier(
-    FlightState.initial,
-  );
-
-  /// 스테이지·골·씨앗·콤보·별 (바뀔 때만).
-  final ValueNotifier<RunHudInfo> runHud = ValueNotifier(RunHudInfo.empty);
-
-  /// 마지막 발사 결정 (판정 팝업용). 새 판이면 null.
-  final ValueNotifier<LaunchDecision?> lastLaunch = ValueNotifier(null);
-
-  /// 당기는 중인지 (안내 문구 숨김용).
-  final ValueNotifier<bool> pulling = ValueNotifier(false);
-
-  static const double _hudInterval = 0.1;
+  /// HUD 알림 (비행 상태·스테이지·보스·판 결과).
+  final RunHudBus hud = RunHudBus();
 
   /// 모찌가 당긴 벡터를 따라가는 비율 (샘플: 절반).
   static const double _pullFollow = 0.5;
@@ -67,6 +54,7 @@ class MozziGame extends FlameGame
   late final MochiComponent _mochi;
   late final PlayInput _input;
   final GoalFlag _goal = GoalFlag();
+  final GhostFlag _ghost = GhostFlag();
   late final RunFx _fx;
   int _runSeed = 0;
   double _clock = 0;
@@ -75,13 +63,8 @@ class MozziGame extends FlameGame
     screenWidth: 960,
     screenHeight: 540,
   );
-  double _hudTimer = 0;
 
-  UpgradeLevels get levels => _levels;
-
-  /// 볼 부풀리기·급강하 해금 (온보딩 P8 에서 설정).
-  ControlUnlocks get controlUnlocks => _input.unlocks;
-  set controlUnlocks(ControlUnlocks value) => _input.unlocks = value;
+  RunSetup get setup => _setup;
 
   @override
   VirtualViewport get viewport => _viewport;
@@ -109,6 +92,12 @@ class MozziGame extends FlameGame
 
   @override
   WorldConfig get worldConfig => formulas.config.world;
+
+  @override
+  BossRule? get boss => _session.boss;
+
+  @override
+  FlightState get runState => _session.state;
 
   @override
   Future<void> onLoad() async {
@@ -139,11 +128,13 @@ class MozziGame extends FlameGame
       GroundComponent.sample(basePxPerM: cfg.cameraBasePxPerM),
       DistanceMarkers(),
       ObjectLayer(this),
+      _ghost,
       _goal,
+      BossRival(this),
       _mochi,
     ]);
     _fx = RunFx(world);
-    resetRun(_levels, stage: _stage);
+    resetRun(_setup);
   }
 
   @override
@@ -155,31 +146,34 @@ class MozziGame extends FlameGame
   }
 
   /// 새 판 준비. 판마다 다른 배치 시드 (GDD §4 청크 시드 배치).
-  void resetRun(UpgradeLevels levels, {StageSpec? stage}) {
-    _levels = levels;
-    _stage = stage;
+  void resetRun(RunSetup setup) {
+    _setup = setup;
+    final stage = setup.stage;
     _session = RunSession(
       formulas: formulas,
-      levels: levels,
+      levels: setup.levels,
       stage: stage,
       runSeed: ++_runSeed,
+      bossEase: setup.bossEase,
     );
     _goal
       ..goalM = stage?.targetM
       ..broken = false;
+    _ghost.xM = setup.ghostM;
+    _input
+      ..reset()
+      ..unlocks = setup.controls;
     _stepper.reset();
     _rig.reset();
-    _input.reset();
-    pulling.value = false;
-    lastLaunch.value = null;
-    _publish(force: true);
+    hud.reset();
+    _publish(0, force: true);
   }
 
   // ---- 입력 (화면 논리 px → 가상 px). 발사 전 = 당기기, 비행 중 = 조작 3종 ----
 
   void pointerDown(double screenX, double screenY) {
     _input.down(screenX / _viewport.scale, screenY / _viewport.scale, _clock);
-    pulling.value = _input.pulling;
+    hud.pulling.value = _input.pulling;
   }
 
   void pointerMove(double screenX, double screenY) =>
@@ -187,20 +181,20 @@ class MozziGame extends FlameGame
 
   void pointerUp() {
     _input.up(_clock);
-    pulling.value = false;
+    hud.pulling.value = false;
     _wasOvercharged = false;
   }
 
   void _launchWith(LaunchDecision decision) {
     if (_session.state.phase != FlightPhase.ready) return;
     _session.launch(decision);
-    lastLaunch.value = decision;
+    hud.lastLaunch.value = decision;
     _fx.launch(
       at: _mochi.position,
       r: _mochi.radiusM,
       perfect: decision.judgement.grade == GaugeGrade.perfect,
     );
-    _publish(force: true);
+    _publish(0, force: true);
   }
 
   void _applyGesture(FlightGesture g) {
@@ -214,7 +208,7 @@ class MozziGame extends FlameGame
       case FlightGesture.dive:
         if (_session.dive()) unawaited(HapticFeedback.mediumImpact());
     }
-    _publish(force: true);
+    _publish(0, force: true);
   }
 
   @override
@@ -247,8 +241,7 @@ class MozziGame extends FlameGame
     camera.viewfinder
       ..zoom = _viewport.scale * _rig.pxPerM
       ..position = Vector2(_rig.focusX, 0);
-    _hudTimer += dt;
-    _publish(force: s.phase != before || goalNow);
+    _publish(dt, force: s.phase != before || goalNow);
     super.update(dt);
   }
 
@@ -266,31 +259,21 @@ class MozziGame extends FlameGame
     );
   }
 
-  void _publish({required bool force}) {
-    final st = _session.stats;
-    final info = RunHudInfo(
-      stageId: _stage?.id,
-      goalM: _stage?.targetM,
-      goalReached: st.goalTimeSec != null,
-      seedsPicked: st.seedsPicked,
-      combo: st.combo,
-      missionText: _stage?.star3Text,
-      stars: _session.state.phase == FlightPhase.stopped
-          ? _session.stars()
-          : null,
+  void _publish(double dt, {required bool force}) {
+    final view = camera.visibleWorldRect;
+    hud.publish(
+      _session,
+      _setup,
+      dt: dt,
+      force: force,
+      viewLeftM: view.left,
+      viewRightM: view.right,
     );
-    if (info != runHud.value) runHud.value = info;
-    if (!force && _hudTimer < _hudInterval) return;
-    _hudTimer = 0;
-    flightState.value = _session.state;
   }
 
   @override
   void onRemove() {
-    flightState.dispose();
-    runHud.dispose();
-    lastLaunch.dispose();
-    pulling.dispose();
+    hud.dispose();
     super.onRemove();
   }
 }

@@ -17,6 +17,8 @@ MOON_ROW = 30  # 6-1 달: 목표 거리 없음
 BOSS_FIRST_ROW = 42  # A 이름, B 키, C 값
 BOSS_KEYS = [
     "boss_2_5_rival_time_sec", "boss_2_5_pigeon_mult", "boss_fail_ease_step", "boss_fail_ease_max",
+    "boss_1_5_cat_delay_sec", "boss_1_5_cat_time_sec", "boss_2_5_fountain_min", "boss_2_5_fountain_max",
+    "boss_3_5_steal_per_sec", "boss_3_5_crow_hit_meter",
 ]
 
 # 「오브젝트」 시트 (GDD §4 월드 테마·배치 규칙)

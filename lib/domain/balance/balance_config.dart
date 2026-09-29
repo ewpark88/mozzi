@@ -69,6 +69,7 @@ class BalanceConfig {
     required this.launch,
     required this.controls,
     required this.mochiRadiusPx,
+    required this.adRewardMultiplier,
     required this.world,
     required List<ZoneSpec> zones,
   }) : upgrades = Map.unmodifiable(upgrades),
@@ -97,6 +98,7 @@ class BalanceConfig {
       launch: LaunchSpec.fromJson(r),
       controls: FlightControlSpec.fromJson(r),
       mochiRadiusPx: r.number('mochi_radius_px'),
+      adRewardMultiplier: r.number('ad_reward_multiplier'),
       world: WorldConfig.fromJson(r),
       zones: r.objectList('zones').map(ZoneSpec.fromJson).toList(),
     );
@@ -134,6 +136,9 @@ class BalanceConfig {
 
   /// 2.5D 샘플 모찌 반지름 (가상 px).
   final double mochiRadiusPx;
+
+  /// `ad_reward_multiplier` 결과 화면 보상형 광고 씨앗 배율 (GDD §7).
+  final double adRewardMultiplier;
 
   /// 월드·스테이지·오브젝트 (GDD §4).
   final WorldConfig world;

@@ -52,7 +52,7 @@ void main() {
     final service = UpgradeService(BalanceFormulas(loadDefaultBalance()));
 
     test('견적: Lv0 고무줄은 10씨앗', () {
-      const progress = PlayerProgress(wallet: Wallet(seeds: 9));
+      final progress = PlayerProgress(wallet: const Wallet(seeds: 9));
       final q = service.quote(progress, UpgradeType.launch);
       expect(q.currentLevel, 0);
       expect(q.cost, 10);
@@ -60,7 +60,7 @@ void main() {
     });
 
     test('구매하면 씨앗이 줄고 레벨이 오른다', () {
-      const progress = PlayerProgress(wallet: Wallet(seeds: 100));
+      final progress = PlayerProgress(wallet: const Wallet(seeds: 100));
       final r = service.purchase(progress, UpgradeType.boost);
       final next = (r as Ok<PlayerProgress, PurchaseError>).value;
       expect(next.wallet.seeds, 75); // 부스터 Lv0 비용 25
@@ -69,7 +69,7 @@ void main() {
     });
 
     test('연속 구매는 레벨별 비용을 따른다 (바운스 40 → 50 → 63)', () {
-      var progress = const PlayerProgress(wallet: Wallet(seeds: 153));
+      var progress = PlayerProgress(wallet: const Wallet(seeds: 153));
       for (var i = 0; i < 3; i++) {
         progress =
             (service.purchase(progress, UpgradeType.bounce)

@@ -53,7 +53,7 @@ lib/
     run/      # RunSession(한 판), ObjectInteractor(효과), RunStats(콤보·미션 기록), StarRules(★·★★·★★★)
     economy/  # Wallet, UpgradeService
     progress/ # PlayerProgress(세이브 모델)
-    services/ # (P9) abstract: RemoteConfigService, AnalyticsService, AdService, IapService, SaveStore
+    services/ # abstract: SaveStore·AdService (P6), RemoteConfigService·AnalyticsService·IapService (P9)
   data/
     save/hive_save_store.dart
     fake/                   # Fake 구현 모음 (개발·테스트 기본)
@@ -81,7 +81,7 @@ shaders/                    # FragmentShader(.frag) — pubspec flutter.shaders 
       ← BalanceConfig, 업그레이드 레벨, 스테이지, 런 시드(청크 배치)
   → FlightState (위치·속도·연료·조작 상태) + RunStats (씨앗·콤보·적중·미션 기록) + 적중 목록(연출)
   → game 컴포넌트가 FlightState 를 그대로 렌더 / ui HUD 가 구독
-  → 정지 시 RunResult → domain/economy 가 보상 계산 → PlayerProgress 갱신 → SaveStore 저장
+  → 정지 시 RunResult → domain/progress RunRecorder 가 보상 계산 → PlayerProgress 갱신 → SaveStore 저장
 ```
 - Flame `update(dt)`는 누적 시간을 고정 스텝으로 쪼개 `step()`을 호출한다 (가변 dt로 물리를 돌리지 않는다).
 - 시뮬레이터는 Flame 좌표가 아니라 **미터 단위 월드 좌표**를 쓴다. 화면 변환은 game 레이어 책임.
@@ -106,4 +106,4 @@ shaders/                    # FragmentShader(.frag) — pubspec flutter.shaders 
 | AnalyticsService | 콘솔 로그 + 메모리 기록 | Firebase Analytics |
 | AdService | 즉시 보상 지급 / 스킵 | google_mobile_ads (테스트 ID) |
 | IapService | 즉시 구매 성공 | in_app_purchase |
-| SaveStore | 메모리 | Hive (P6) + Firestore 백업(v1.1) |
+| SaveStore | 메모리 (테스트) | Hive — 모든 flavor (P6, ADR-017) + Firestore 백업(v1.1) |

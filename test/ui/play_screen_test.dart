@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mozzi/domain/balance/balance_formulas.dart';
+import 'package:mozzi/domain/balance/upgrade_levels.dart';
+import 'package:mozzi/domain/balance/upgrade_type.dart';
+import 'package:mozzi/domain/run/run_result.dart';
+import 'package:mozzi/game/run_setup.dart';
 import 'package:mozzi/ui/play/hud_scale.dart';
 import 'package:mozzi/ui/play/play_screen.dart';
 import 'package:mozzi/ui/strings.dart';
@@ -9,6 +13,10 @@ import '../helpers/balance_fixture.dart';
 
 void main() {
   final formulas = BalanceFormulas(loadDefaultBalance());
+  final stage11 = formulas.config.world.stage(1, 1);
+
+  /// 끝난 판 결과 (onRunEnd 로 받은 것).
+  late List<RunResult> ended;
 
   Future<void> pumpPlay(
     WidgetTester tester,
@@ -19,9 +27,27 @@ void main() {
       ..physicalSize = logical * 2
       ..devicePixelRatio = 2;
     addTearDown(tester.view.reset);
+    ended = [];
     await tester.pumpWidget(
       MaterialApp(
-        home: PlayScreen(formulas: formulas, isDev: dev),
+        home: PlayScreen(
+          formulas: formulas,
+          isDev: dev,
+          stage: stage11,
+          devStages: [stage11],
+          hooks: PlayHooks(
+            // 부스터 Lv1: 조작 확인용 연료
+            setupFor: (s) => RunSetup(
+              stage: s,
+              levels: UpgradeLevels.of(const {UpgradeType.boost: 1}),
+            ),
+            onRunEnd: ended.add,
+            nextStageOf: (_) => null,
+            onMap: () {},
+            onUpgrades: () async {},
+            onAdDouble: (_) async => true,
+          ),
+        ),
       ),
     );
     await tester.pump();
@@ -54,7 +80,7 @@ void main() {
     expect(hudScaleOf(const Size(1366, 1024)), 1.6);
   });
 
-  testWidgets('당겼다 놓으면 판정이 뜨고 발사되어, 정지하면 재도전 버튼이 나온다', (tester) async {
+  testWidgets('당겼다 놓으면 판정이 뜨고 발사되어, 정지하면 결과 화면이 나온다', (tester) async {
     await pumpPlay(tester, const Size(915, 412), dev: false);
     final gesture = await tester.startGesture(const Offset(450, 200));
     await tester.pump(const Duration(milliseconds: 16));
@@ -86,6 +112,16 @@ void main() {
     }
     expect(find.text(Strings.retry), findsOneWidget);
     expect(find.text(Strings.distance(0)), findsNothing, reason: '날아갔어야 함');
+    expect(ended, hasLength(1), reason: '판 결과는 한 번만 보고');
+    expect(ended.single.seeds, greaterThan(0), reason: '실패해도 씨앗');
+    expect(
+      find.textContaining(Strings.seedsEarned(ended.single.seeds)),
+      findsOneWidget,
+    );
+    await tester.tap(find.text(Strings.adDouble(2)));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text(Strings.adDone), findsOneWidget);
 
     await tester.tap(find.text(Strings.retry));
     await tester.pump();

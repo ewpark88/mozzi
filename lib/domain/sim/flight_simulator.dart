@@ -94,6 +94,13 @@ class FlightSimulator {
   double? get diveElapsedSec =>
       _controls.diving ? _controls.diveElapsedSec : null;
 
+  /// 보스에게 잡히거나 져서 판이 끝남: 그 자리에서 멈춘다 (GDD §4 보스 실패).
+  void halt() {
+    if (_state.phase == FlightPhase.ready) return;
+    _controls.onGround();
+    _state = _copy(vx: 0, vy: 0, phase: FlightPhase.stopped);
+  }
+
   /// [fixedDt] 만큼 진행한다. 정지 후에는 아무것도 하지 않는다.
   void step() => _advance(fixedDt);
 

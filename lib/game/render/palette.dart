@@ -93,6 +93,25 @@ abstract final class ObjectPalette {
   ];
 }
 
+/// 보스·고스트 깃발·월드맵 (GDD §4). 단색 플레이스홀더 — P7 에서 2.5D.
+abstract final class BossPalette {
+  static const cat = Color(0xFFE59866);
+  static const crown = Color(0xFFF7C948);
+  static const crowBoss = Color(0xFF232323);
+  static const eye = Color(0xFF111111);
+  static const ghostPole = Color(0x996B4A2F);
+  static const ghostFlag = Color(0x99FFFFFF);
+  static const meter = Color(0xFF6C3483);
+  static const meterBack = Color(0x33000000);
+  static const lost = Color(0xFFB3261E);
+  static const mapPath = Color(0xFFD7B98E);
+  static const mapNode = Color(0xFFFFF8EC);
+  static const mapNodeCleared = Color(0xFFF5A55C);
+  static const mapNodeLocked = Color(0xFFBDB3A6);
+  static const mapBoss = Color(0xFFE74C3C);
+  static const star = Color(0xFFF5B301);
+}
+
 /// 월드별 배경 색 (GDD §3 구역별 조명: 뒷마당 아침, 도시 노을). P7 에서 대기 원근·조명으로 확장.
 class WorldPalette {
   const WorldPalette({

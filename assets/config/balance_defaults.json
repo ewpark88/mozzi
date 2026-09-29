@@ -67,6 +67,7 @@
   "boost_lv0_fuel_sec": 0,
   "boost_cut_on_land": true,
   "gesture_tap_max_sec": 0.18,
+  "ad_reward_multiplier": 2,
   "zones": [
     {
       "id": 1,
@@ -486,6 +487,12 @@
   "boss_2_5_pigeon_mult": 1.5,
   "boss_fail_ease_step": 0.05,
   "boss_fail_ease_max": 0.15,
+  "boss_1_5_cat_delay_sec": 2,
+  "boss_1_5_cat_time_sec": 6,
+  "boss_2_5_fountain_min": 2,
+  "boss_2_5_fountain_max": 3,
+  "boss_3_5_steal_per_sec": 0.019,
+  "boss_3_5_crow_hit_meter": 0.1,
   "objects": {
     "seed": {
       "world": 1,

@@ -6,6 +6,7 @@ import 'package:mozzi/domain/balance/upgrade_levels.dart';
 import 'package:mozzi/domain/balance/upgrade_type.dart';
 import 'package:mozzi/domain/economy/wallet.dart';
 import 'package:mozzi/domain/progress/player_progress.dart';
+import 'package:mozzi/domain/progress/stage_record.dart';
 
 void main() {
   final sample = PlayerProgress(
@@ -31,7 +32,7 @@ void main() {
   });
 
   test('새 게임은 모두 0', () {
-    const p = PlayerProgress.initial;
+    final p = PlayerProgress.initial;
     expect(p.levels, const UpgradeLevels.zero());
     expect(p.wallet, Wallet.empty);
     expect(p.totalRuns, 0);
@@ -57,6 +58,33 @@ void main() {
     expect(p.totalRuns, 14);
     expect(p.levels, sample.levels);
     expect(p.wallet, sample.wallet);
+  });
+
+  test('v1 세이브는 v2 로 변환된다 (스테이지 기록·해금은 비어 있음)', () {
+    final v1 = {
+      'schema': 1,
+      'levels': {'upg_launch': 4},
+      'wallet': {'seeds': 30, 'candy': 0},
+      'best_distance_m': 88.0,
+      'total_runs': 6,
+      'onboarding_step': 2,
+    };
+    final p = PlayerProgress.fromJson(v1);
+    expect(p.totalRuns, 6);
+    expect(p.wallet.seeds, 30);
+    expect(p.levels[UpgradeType.launch], 4);
+    expect(p.stages, isEmpty);
+    expect(p.unlocks, isEmpty);
+    expect(p.toJson()['schema'], 2);
+  });
+
+  test('v2 는 스테이지 기록·해금까지 저장했다가 복원한다', () {
+    final p = sample.copyWith(
+      stages: {'1-1': const StageRecord(star1: true, bestDistanceM: 31)},
+      unlocks: {'slot_hat'},
+    );
+    expect(PlayerProgress.fromJson(jsonDecode(jsonEncode(p.toJson()))), p);
+    expect(p.totalStars, 1);
   });
 
   group('UpgradeLevels', () {

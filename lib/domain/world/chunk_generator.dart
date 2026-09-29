@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 import 'package:mozzi/core/random/seeded_rng.dart';
 import 'package:mozzi/domain/balance/balance_config.dart';
 import 'package:mozzi/domain/balance/world_spec.dart';
+import 'package:mozzi/domain/world/course_tweak.dart';
 import 'package:mozzi/domain/world/object_kind.dart';
 
 /// 월드에 놓인 오브젝트 하나 (불변). 좌표는 미터, y 위가 +, 땅 오브젝트는 y = 0.
@@ -33,10 +34,17 @@ class WorldObject {
 /// - 장애물 비율은 월드별 (0 → 30%).
 /// - 월드는 거리 기준 (시트 「설정」 구역 시작 거리).
 class ChunkGenerator {
-  ChunkGenerator(this.config, {required this.runSeed});
+  ChunkGenerator(
+    this.config, {
+    required this.runSeed,
+    this.tweak = CourseTweak.none,
+  });
 
   final BalanceConfig config;
   final int runSeed;
+
+  /// 스테이지별 코스 조정 (보스 2-5 비둘기·분수 등).
+  final CourseTweak tweak;
 
   /// 첫 오브젝트는 발사 지점에서 이만큼 떨어진 곳부터 (샘플 260px ≈ 5m).
   static const double firstObjectM = 5;
@@ -59,14 +67,17 @@ class ChunkGenerator {
     final rng = SeededRng(_mix(runSeed, index));
     final start = index * _spawn.chunkM;
     final end = start + _spawn.chunkM;
-    final out = <WorldObject>[];
+    final out = <WorldObject>[
+      for (final o in tweak.fixed)
+        if (o.xM >= start && o.xM < end) o,
+    ];
     var id = index * _idStride;
     var x =
         math.max(start, firstObjectM) +
         _spawn.spacingAt(start) * rng.nextDouble() * 0.5;
     while (x < end) {
       final spawn = config.world.spawnFor(worldAt(x));
-      final kind = _pickKind(spawn, rng);
+      final kind = _pickKind(tweak.apply(spawn), rng);
       if (kind != null) {
         for (final o in _place(kind, x, rng, id)) {
           out.add(o);

@@ -5,7 +5,7 @@ import 'package:mozzi/domain/sim/launch_controller.dart';
 import 'package:mozzi/ui/play/grade_popup.dart';
 import 'package:mozzi/ui/strings.dart';
 
-/// 개발용 패널 (dev flavor 전용): 레벨 선택, 속도·고도·거리, 공식 거리 비교.
+/// 개발용 패널 (dev flavor 전용): 스테이지(잠금 무시)·레벨 선택, 속도·고도·거리, 공식 거리 비교.
 class DevPanel extends StatelessWidget {
   const DevPanel({
     required this.stages,
@@ -20,7 +20,8 @@ class DevPanel extends StatelessWidget {
     super.key,
   });
 
-  static const List<int> levelChoices = [0, 10, 20, 40];
+  /// null = 내 레벨(진행 상태 그대로).
+  static const List<int?> levelChoices = [null, 0, 10, 20, 40];
 
   /// 게임 화면을 가리지 않도록 폭 제한 (HUD 배율 1 기준 논리 px).
   static const double maxWidth = 300;
@@ -31,9 +32,9 @@ class DevPanel extends StatelessWidget {
   final ValueChanged<StageSpec?> onStage;
   final FlightState state;
   final LaunchDecision? lastLaunch;
-  final int level;
+  final int? level;
   final double formulaDistanceM;
-  final ValueChanged<int> onLevel;
+  final ValueChanged<int?> onLevel;
   final double scale;
 
   @override
@@ -79,7 +80,10 @@ class DevPanel extends StatelessWidget {
                 children: [
                   for (final lv in levelChoices)
                     ChoiceChip(
-                      label: Text(Strings.devLevel(lv), style: text),
+                      label: Text(
+                        lv == null ? Strings.devMyLevel : Strings.devLevel(lv),
+                        style: text,
+                      ),
                       selected: lv == level,
                       onSelected: (_) => onLevel(lv),
                       visualDensity: VisualDensity.compact,
