@@ -509,7 +509,7 @@ d = \left( \frac{v^2}{g} \times (1 + 0.06 \cdot Lv_{aero}) + 20 \cdot Lv_{boost}
 첫 판은 무조건 신나게 날아가게 하고, 조작은 한 번에 하나씩만 가르친다. 첫 결제 제안은 성장이 느려지는 약 15분 시점이다.
 
 1. 1판: 당기기만 가르친다. 트램폴린이 자동 배치되어 크게 튀어 오른다.
-2. 2판: 부스터를 가르치고, 첫 업그레이드는 무료로 준다.
+2. 2판: 1판이 끝나면 부스터 Lv1 을 무료로 준다 (부스터 Lv0 은 연료가 없다). 2판에 부스터를 가르친다.
 3. 3판: 황금 씨앗 이벤트가 확정으로 나오고, 광고 2배를 처음 제안한다.
 4. 5판: 퍼펙트 릴리즈를 가르친다. 전면 광고는 이후부터 나온다.
 5. 월드 1 클리어 (약 9분, 스테이지 1-5): 병아리를 해금하고 캐릭터 교체를 가르친다. 볼 부풀리기와 급강하도 이 때부터 연다.
@@ -523,7 +523,7 @@ Flutter + Flame으로 만들고, 모든 밸런스 값은 Firebase Remote Config�
 | --- | --- | --- |
 | 엔진 | Flame | 게임 루프, 카메라, 5레이어 패럴랙스 |
 | 물리 | 자체 결정론 물리 (고정 timestep, 순수 Dart) | 궤적, 바운스, 충돌 (2D) |
-| 캐릭터 렌더링 | Flame 커스텀 컴포넌트 + Flutter FragmentShader | 2.5D 셰이딩, 늘어남·찌그러짐, 월드별 조명 |
+| 캐릭터 렌더링 | Flame 커스텀 컴포넌트 + Canvas 그라데이션 (셰이딩 결과 Picture 캐시) | 2.5D 셰이딩, 늘어남·찌그러짐, 월드별 조명 |
 | 이펙트 | Flame 파티클 + 가산 블렌딩 | 불꽃, 반짝이, 먼지 |
 | 광고 | google\_mobile\_ads + 메디에이션 | 보상형, 전면 |
 | 결제 | in\_app\_purchase | 광고 제거, 별사탕, 시즌패스, 월정액 |
@@ -543,6 +543,7 @@ Flutter + Flame으로 만들고, 모든 밸런스 값은 Firebase Remote Config�
 - 스테이지: `stage_table`(JSON, 위 형식)
 - 보스: `boss_1_5_cat_delay_sec`(2), `boss_1_5_cat_time_sec`(6), `boss_2_5_rival_time_sec`(16), `boss_2_5_pigeon_mult`(1.5), `boss_2_5_fountain_min`(2), `boss_2_5_fountain_max`(3), `boss_3_5_steal_per_sec`(0.019), `boss_3_5_crow_hit_meter`(0.1), `boss_fail_ease_step`(0.05), `boss_fail_ease_max`(0.15)
 - 광고: `ad_interstitial_every`, `ad_interstitial_grace_runs`, `ad_reward_multiplier`
+- 렌더링: `render_low_spec`(false) — 저사양 모드 기본값 (털 질감·배경 흐림 끄기)
 - 이벤트: `evt_golden_seed_rate`, `evt_chest_rate`, `evt_ufo_rate`, `liveops_active_event`
 - 상점: `shop_starterpack_trigger_min`
 
