@@ -15,6 +15,11 @@ void main() {
     expect(g.up(0.1), [FlightGesture.boostTap]);
   });
 
+  test('탭 판정 시간(gesture_tap_max_sec) 안에 떼면 탭', () {
+    g.down(100, 100, 0);
+    expect(g.up(spec.gestureTapMaxSec - 0.01), [FlightGesture.boostTap]);
+  });
+
   test('오래 누르면 부풀리기 시작, 떼면 끝', () {
     g.down(100, 100, 0);
     expect(g.tick(spec.gestureHoldSec - 0.01), isEmpty);

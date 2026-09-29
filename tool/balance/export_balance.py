@@ -53,14 +53,17 @@ PHYS_KEYS = [
     "launch_angle_max_deg",
     "boost_fuel_sec",
     "boost_tap_sec",
+    "boost_lv0_fuel_sec",
+    "boost_cut_on_land",
     "inflate_glide_ratio",
-    "inflate_drag_per_sec",
+    "inflate_decel_per_sec",
     "dive_speed_ratio",
     "dive_bounce_mult",
     "dive_perfect_window_sec",
     "dive_perfect_mult",
+    "gesture_tap_max_sec",
     "gesture_hold_sec",
-    "gesture_swipe_px",
+    "gesture_swipe_min_px",
     "gesture_swipe_max_sec",
 ]
 
@@ -140,15 +143,19 @@ def build_objects(wb) -> dict:
 
 
 def build_stages(wb) -> dict:
-    """「스테이지」 시트 입력값 (GDD §4 스테이지 구조)."""
+    """「스테이지」 시트 입력값 (GDD §4 스테이지 구조).
+
+    스테이지 목록은 RC 키 `stage_table` = {"stages": [...]} 형식 (GDD §4 스테이지 데이터 형식).
+    """
     ws = wb[STAGE_SHEET]
     stages = []
     for row in [*range(STAGE_FIRST_ROW, STAGE_FIRST_ROW + STAGE_COUNT), MOON_ROW]:
         target = ws[f"C{row}"].value
+        world, stage = _num(ws[f"A{row}"].value), _num(ws[f"B{row}"].value)
         stages.append({
-            "world": _num(ws[f"A{row}"].value),
-            "stage": _num(ws[f"B{row}"].value),
-            "target_m": _num(target) if target is not None else None,
+            "id": f"{world}-{stage}",
+            "world": world,
+            "goal": _num(target) if target is not None else None,
             "boss": ws[f"D{row}"].value == "보스",
             "star3": json.loads(ws[f"I{row}"].value),
             "star3_text": ws[f"J{row}"].value,
@@ -167,7 +174,7 @@ def build_stages(wb) -> dict:
     if [u["world"] for u in unlock] != UNLOCK_WORLDS:
         raise SystemExit(f"월드 해금 표 파싱 실패: {unlock}")
     return {
-        "stages": stages,
+        "stage_table": {"stages": stages},
         "stage_star2_ratio": _num(ws[f"C{STAR2_ROW}"].value),
         "world_unlock_stars": unlock,
         **boss,

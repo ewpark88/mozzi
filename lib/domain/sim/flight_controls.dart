@@ -11,11 +11,15 @@ class FlightControls {
     required this.fuelMaxSec,
     required this.tapSec,
     required this.boostSpeedMps,
+    this.cutBoostOnLand = true,
   }) : _fuel = fuelMaxSec;
 
   final double fuelMaxSec;
   final double tapSec;
   final double boostSpeedMps;
+
+  /// 착지하면 분사 중이던 연료가 사라진다 (`boost_cut_on_land`).
+  final bool cutBoostOnLand;
 
   double _fuel;
   double _burnLeft = 0;
@@ -69,10 +73,10 @@ class FlightControls {
       ? inflateRatio
       : null;
 
-  /// 땅에 닿음: 분사 중이던 연료는 사라지고(공중에서 써야 함) 급강하가 끝난다.
+  /// 땅에 닿음: [cutBoostOnLand] 면 분사 중이던 연료가 사라지고(공중에서 써야 함) 급강하가 끝난다.
   /// 볼 부풀리기는 손을 떼기 전까지 유지 (튄 뒤에도 계속 활공).
   void onGround() {
-    _burnLeft = 0;
+    if (cutBoostOnLand) _burnLeft = 0;
     _diving = false;
   }
 }

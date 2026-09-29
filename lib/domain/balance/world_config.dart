@@ -52,7 +52,11 @@ class WorldConfig {
           .objectList('spawn_weights')
           .map(WorldSpawn.fromJson)
           .toList(),
-      stages: r.objectList('stages').map(StageSpec.fromJson).toList(),
+      stages: r
+          .object('stage_table')
+          .objectList('stages')
+          .map(StageSpec.fromJson)
+          .toList(),
       star2Ratio: r.number('stage_star2_ratio'),
       unlockStars: {
         for (final u in r.objectList('world_unlock_stars'))

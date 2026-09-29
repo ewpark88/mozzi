@@ -46,8 +46,9 @@ class FlightParams {
 
   final FlightControlSpec controls;
 
-  /// 연료 (시뮬 초). 예산이 없으면 0.
-  double get fuelSec => boostBudgetM > 0 ? controls.boostFuelSec : 0;
+  /// 연료 (시뮬 초). 예산이 없으면(Lv0) `boost_lv0_fuel_sec`.
+  double get fuelSec =>
+      boostBudgetM > 0 ? controls.boostFuelSec : controls.boostLv0FuelSec;
 
   /// 분사 중 추가 수평 이동 속도 (m/s).
   double get boostSpeedMps =>

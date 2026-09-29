@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-09-29 · GDD 반영 (P6 착수 전)
+**완료**
+- 사용자가 GDD 원본에 제안 G1~G7·G10~G18 반영 → spec_sync diff 확인
+- GDD §10 RC 키 이름으로 통일(ADR-016): 시트 「설정」 `inflate_decel_per_sec`·`gesture_swipe_min_px`, 신규 `boost_lv0_fuel_sec`·`boost_cut_on_land`·`gesture_tap_max_sec` → 코드가 읽음
+- 스테이지 JSON 을 GDD §4 형식(`stage_table.stages[]`, `id`·`goal`)으로 export, `pacing_sim.py` 도 새 형식 (불일치 0건)
+- 테스트 추가(키 이름·스테이지 형식·id 검증·탭 판정·착지 분사 옵션), verify 통과 (테스트 390개)
+
+**남은 이슈**: GDD 수정 제안 G19(급강하 키 3개)·G20(`star3_text`)·G21(까마귀 감속) / 월드 4·5 장애물 비율 25/30% 는 P11 에서 시트에 추가
+
+---
+
 ## 2026-09-28 · P5 오브젝트·청크·스테이지 골·★★★ 미션 · 0.5.0+6
 **완료**
 - GDD §4 개정(보스 상세·★★★ 미션) 반영: 시트 「스테이지」 미션 JSON·6-1·보스 값, DEV_PLAN P5·P6·P11 재구성

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mozzi/domain/balance/balance_formulas.dart';
 import 'package:mozzi/domain/balance/upgrade_levels.dart';
 import 'package:mozzi/domain/balance/upgrade_type.dart';
+import 'package:mozzi/domain/sim/flight_controls.dart';
 import 'package:mozzi/domain/sim/flight_params.dart';
 import 'package:mozzi/domain/sim/flight_simulator.dart';
 import 'package:mozzi/domain/sim/flight_state.dart';
@@ -197,5 +198,16 @@ void main() {
     }
 
     expect(run(), run());
+  });
+
+  test('boost_cut_on_land 가 false 면 착지해도 분사가 남는다', () {
+    FlightControls make({required bool cut}) => FlightControls(
+      fuelMaxSec: 1.5,
+      tapSec: 0.3,
+      boostSpeedMps: 10,
+      cutBoostOnLand: cut,
+    )..tapBoost();
+    expect((make(cut: true)..onGround()).boosting, isFalse);
+    expect((make(cut: false)..onGround()).boosting, isTrue);
   });
 }

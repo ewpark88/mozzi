@@ -53,6 +53,47 @@ void main() {
     expect(() => BalanceConfig.fromJson(raw), throwsA(isA<JsonFormatError>()));
   });
 
+  test('비행 조작 RC 키가 GDD §10 이름과 같다', () {
+    final raw = rawDefaults();
+    for (final k in [
+      'boost_fuel_sec', 'boost_tap_sec', 'boost_lv0_fuel_sec', //
+      'boost_cut_on_land', 'inflate_glide_ratio', 'inflate_decel_per_sec',
+      'dive_speed_ratio', 'gesture_tap_max_sec', 'gesture_hold_sec',
+      'gesture_swipe_min_px', 'gesture_swipe_max_sec',
+    ]) {
+      expect(raw.containsKey(k), isTrue, reason: k);
+    }
+    final c = loadDefaultBalance().controls;
+    expect(c.boostLv0FuelSec, 0);
+    expect(c.boostCutOnLand, isTrue);
+    expect(c.gestureTapMaxSec, 0.18);
+  });
+
+  test('스테이지는 RC stage_table = {"stages": [...]} 형식 (GDD §4)', () {
+    final table = rawDefaults()['stage_table'] as Map<String, dynamic>;
+    final first =
+        (table['stages'] as List<dynamic>).first as Map<String, dynamic>;
+    expect(first['id'], '1-1');
+    expect(first['world'], 1);
+    expect(first['goal'], 25);
+    final s = loadDefaultBalance().world.stage(3, 3);
+    expect(s.id, '3-3');
+    expect(s.targetM, 3800);
+  });
+
+  test('스테이지 id 가 world 와 어긋나면 거부한다', () {
+    final raw = rawDefaults();
+    final stages =
+        (raw['stage_table'] as Map<String, dynamic>)['stages'] as List<dynamic>;
+    (stages.first as Map<String, dynamic>)['id'] = '2-1';
+    expect(
+      () => BalanceConfig.fromJson(raw),
+      throwsA(
+        isA<JsonFormatError>().having((e) => e.path, 'path', endsWith('.id')),
+      ),
+    );
+  });
+
   test('설정은 수정할 수 없다', () {
     final config = loadDefaultBalance();
     expect(config.zones.clear, throwsUnsupportedError);

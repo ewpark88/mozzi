@@ -19,7 +19,7 @@
 
 1. **모든 개발 근거 = GDD(`모찌 런처 게임 기획서 (GDD).md`) + 밸런스 시트(`모찌런처_밸런스시트.xlsx`)**, 손맛·렌더링 시각 기준 = `모찌 런처 2.5D.html`(사용자 샘플). 수치는 GDD/시트 우선, 샘플과 다르면 알린다.
 2. **GDD 는 계속 갱신된다** → 매 프롬프트 훅이 `tool/spec/spec_sync.py --hook` 으로 변경을 알려준다. 알림이 오면 먼저 `/spec-sync` (diff 확인 → 시트·DEV_PLAN·코드 반영 → `--mark`).
-3. **GDD 파일은 절대 직접 수정하지 않는다.** 사용자가 다른 원본에서 파일을 통째로 덮어써서 직접 수정이 세 번 모두 되돌아갔다. 오류·누락은 `docs/SPEC_CHANGELOG.md` “GDD 수정 제안”(현재 G1~G18)에 적고 알린다.
+3. **GDD 파일은 절대 직접 수정하지 않는다.** 사용자가 다른 원본에서 파일을 통째로 덮어써서 직접 수정이 세 번 모두 되돌아갔다. 오류·누락은 `docs/SPEC_CHANGELOG.md` “GDD 수정 제안”(현재 G19~G21)에 적고 알린다.
 4. **밸런스 시트는 직접 고친다** (GDD 수치 반영·오류 정정). 반드시 `tool/balance/xlsx_edit.ps1`(Excel COM)로 — openpyxl 로 저장하면 수식 캐시가 사라진다. 고치면 `export_balance.py` → verify → SPEC_CHANGELOG 기록.
 5. **Phase 완료 시 Claude 가 커밋 → 브랜치 push → main ff 머지 → push → CI 확인**까지 한다 (사용자 지시). 태그·스토어 업로드는 요청 시에만.
 6. 사용자는 “진행해”로 다음 단계를 지시한다. 미결 기획 사항은 GDD 우선 원칙으로 정하고 ADR·시트 값으로 되돌릴 수 있게 한 뒤 보고한다.
@@ -57,9 +57,9 @@
 
 | 시트 | 내용 | 코드 |
 |---|---|---|
-| 설정 | 업그레이드 5종, 물리·보상, 구역 6개, 체감(28~33행: 샘플 v/g·시간배율·카메라 배율·모찌 반지름), 게이지·당기기(34~52행), 비행 조작(54~65행) | `BalanceConfig`, `LaunchSpec`, `FlightControlSpec` |
+| 설정 | 업그레이드 5종, 물리·보상, 구역 6개, 체감(28~33행: 샘플 v/g·시간배율·카메라 배율·모찌 반지름), 게이지·당기기(34~52행), 비행 조작(54~68행, 키 = GDD §10) | `BalanceConfig`, `LaunchSpec`, `FlightControlSpec` |
 | 업그레이드표·진행 시뮬 | 원본 수식/시뮬 결과 → fixture (테스트 정답) | `balance_formulas_test`, `pacing_simulator_test` |
-| 스테이지 | 1-1~5-5 목표·보스·도달 판수(E~H 시뮬 생성)·★★★ 미션 JSON(I)·설명(J), 6-1 달(30행), ★★ 1.3(32행), 월드 해금 별(35~39행), 보스 값(42~45행) | `WorldConfig.stages`, `BossSpec` |
+| 스테이지 | (JSON `stage_table.stages[]`, GDD §4 형식) 1-1~5-5 목표·보스·도달 판수(E~H 시뮬 생성)·★★★ 미션 JSON(I)·설명(J), 6-1 달(30행), ★★ 1.3(32행), 월드 해금 별(35~39행), 보스 값(42~45행) | `WorldConfig.stages`, `BossSpec` |
 | 오브젝트 | 12종 효과(반지름·값1~3), 배치 설정(20~27행), 월드 1~3 비중·장애물 비율(31~34행) | `ObjectSpec`, `SpawnSpec`, `WorldSpawn` |
 
 셀 위치 상수: `tool/balance/sheet_layout.py` (바꾸면 여기만).
@@ -87,8 +87,7 @@ flutter build apk --flavor dev --debug -t lib/main_dev.dart --dart-define-from-f
 | 항목 | 상태 |
 |---|---|
 | 실기기 확인 | P2~P5 전부 “사용자 확인 필요” — 60fps, 당김·게이지 손맛, 조작 임계값, 오브젝트 체감 |
-| GDD 수정 제안 | G1~G7, G10~G18 사용자 원본 반영 대기 (G8·G9 해결) |
-| G18 해석 | 콤보 ×1.1 을 먹은 씨앗에만 적용(거리 씨앗 제외) — 사용자 확인 대기 |
+| GDD 수정 제안 | G19~G21 사용자 원본 반영 대기 (G1~G18 해결, 2026-09-29) |
 | 보상 합산 | 판 보상 = 거리 씨앗(`seedsForDistance`) + 먹은 씨앗 값(`RunStats.pickupValue`) × 볼주머니 배율? → **P6 에서 결정·ADR** |
 | 온보딩 | 조작 해금(`ControlUnlocks`, 1-5 보스 클리어 보상), 1판 트램폴린 자동 배치 등은 P8 |
 | 2.5D 렌더링 | 모든 그림은 단색 플레이스홀더 — P7 |

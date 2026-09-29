@@ -17,8 +17,8 @@ enum FlightGesture {
 
 /// 탭 / 홀드 / 아래 스와이프를 구분한다 (오인식 방지 임계값은 시트 값).
 ///
-/// - 누른 뒤 [FlightControlSpec.gestureHoldSec] 안에 떼면 탭
-/// - 그보다 오래 누르고 있으면 홀드 (떼면 홀드 끝)
+/// - 누른 뒤 [FlightControlSpec.gestureTapMaxSec] 안에 떼면 탭
+/// - [FlightControlSpec.gestureHoldSec] 이상 누르고 있으면 홀드 (떼면 홀드 끝)
 /// - [FlightControlSpec.gestureSwipeMaxSec] 안에 아래로 [FlightControlSpec.gestureSwipePx] 이상,
 ///   가로보다 세로로 더 움직이면 스와이프 (홀드 중에도 가능 → 부풀리기 끝 + 급강하)
 ///
@@ -71,7 +71,7 @@ class FlightGestureRecognizer {
     final touch = _touch;
     _touch = _Touch.none;
     return switch (touch) {
-      _Touch.pending when t - _t0 < spec.gestureHoldSec => const [
+      _Touch.pending when t - _t0 <= spec.gestureTapMaxSec => const [
         FlightGesture.boostTap,
       ],
       _Touch.pending => const [],

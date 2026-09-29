@@ -103,6 +103,15 @@
   - 수치(효과·배치·월드 비중)는 시트 「오브젝트」. GDD 에 수치가 없어 샘플·설계값 (GDD 제안 G17).
 - 결과: 페이싱 공식은 조작·오브젝트 없는 기준 그대로(오브젝트 없는 RunSession = 공식 거리 테스트), 오브젝트는 숙련 보너스.
 
+## ADR-016 RC 키·스테이지 데이터는 GDD §10·§4 이름을 따른다
+- 날짜: 2026-09-29 · 상태: 채택 (사용자 선택)
+- 맥락: 사용자가 GDD §10 비행 조작 RC 키와 §4 스테이지 데이터 형식을 확정했는데, 코드·시트 이름(`inflate_drag_per_sec`, `gesture_swipe_px`, `stages[].stage/target_m`)과 달랐다.
+- 결정:
+  - 시트·JSON·도메인 키를 GDD 이름으로 바꾼다: `inflate_decel_per_sec`, `gesture_swipe_min_px`. GDD 에만 있던 `boost_lv0_fuel_sec`(0), `boost_cut_on_land`(true), `gesture_tap_max_sec`(0.18)을 시트에 추가하고 코드가 읽는다 (Lv0 연료, 착지 시 분사 소멸, 탭 판정).
+  - 스테이지는 `stage_table` = `{"stages": [{"id": "3-3", "world", "goal", "boss", "star3", "star3_text"}]}`. 번들 JSON 도 같은 형식, `id` 와 `world` 가 어긋나면 로드 실패.
+  - GDD 목록에 없는 급강하 키 3개와 `star3_text` 는 유지하고 GDD 추가를 제안(G19·G20). Dart 필드명(`targetM`, `gestureSwipePx`)은 그대로.
+- 결과: RC 콘솔에 GDD 목록 그대로 키를 만들면 코드가 읽는다. 값은 바뀌지 않았다 (테스트·판수 재현 동일).
+
 ## ADR-007 Android applicationId `com.repo.mozzi`, flavor dev/prod
 - 날짜: 2026-09-28 · 상태: 채택
 - 결정: prod `com.repo.mozzi`, dev `com.repo.mozzi.dev`. iOS 는 v1.0 이후 구성.

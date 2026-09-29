@@ -17,6 +17,7 @@ class FlightSimulator {
         fuelMaxSec: params.fuelSec,
         tapSec: params.controls.boostTapSec,
         boostSpeedMps: params.boostSpeedMps,
+        cutBoostOnLand: params.controls.boostCutOnLand,
       );
 
   /// 시뮬 1스텝 (초). 화면 프레임과 무관하다 (FixedStepper 가 나눠 호출).
