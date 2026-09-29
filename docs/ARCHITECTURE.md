@@ -47,12 +47,13 @@ lib/
     random/seeded_rng.dart  # 결정론 RNG
     result.dart
   domain/
-    balance/                # BalanceConfig, UpgradeType, 비용·효과·거리 공식
-    sim/                    # FlightSimulator, FlightState, LaunchInput, 조작 명령
-    world/                  # ZoneDef, ChunkGenerator, WorldObjectSpec
-    economy/                # Wallet, UpgradeService, ComboTracker, RunReward
-    progress/               # PlayerProgress(세이브 모델), 최고기록, 온보딩 단계
-    services/               # abstract: RemoteConfigService, AnalyticsService, AdService, IapService, SaveStore
+    balance/  # BalanceConfig(+LaunchSpec·FlightControlSpec·WorldConfig·StageSpec), 공식, 페이싱 시뮬, 업그레이드
+    sim/      # FlightSimulator(고정 dt·활공·부스터·급강하), FlightParams, landing, FixedStepper, AccuracyGauge, LaunchController
+    world/    # ObjectKind, ChunkGenerator(100m 결정론)·WorldObject·ObjectField
+    run/      # RunSession(한 판), ObjectInteractor(효과), RunStats(콤보·미션 기록), StarRules(★·★★·★★★)
+    economy/  # Wallet, UpgradeService
+    progress/ # PlayerProgress(세이브 모델)
+    services/ # (P9) abstract: RemoteConfigService, AnalyticsService, AdService, IapService, SaveStore
   data/
     save/hive_save_store.dart
     fake/                   # Fake 구현 모음 (개발·테스트 기본)
@@ -76,8 +77,9 @@ shaders/                    # FragmentShader(.frag) — pubspec flutter.shaders 
 ```
 입력(드래그/탭/홀드/스와이프)
   → game/input 이 도메인 명령(LaunchInput, FlightCommand)으로 변환
-  → domain/sim FlightSimulator.step(dt=1/60, commands)   ← BalanceConfig, 업그레이드 레벨, 시드
-  → FlightState (위치, 속도, 연료, 콤보, 획득 씨앗, 이벤트 목록)
+  → domain/run RunSession.step() = FlightSimulator.step(dt=1/60) + ObjectInteractor(오브젝트 효과) + RunStats + 골
+      ← BalanceConfig, 업그레이드 레벨, 스테이지, 런 시드(청크 배치)
+  → FlightState (위치·속도·연료·조작 상태) + RunStats (씨앗·콤보·적중·미션 기록) + 적중 목록(연출)
   → game 컴포넌트가 FlightState 를 그대로 렌더 / ui HUD 가 구독
   → 정지 시 RunResult → domain/economy 가 보상 계산 → PlayerProgress 갱신 → SaveStore 저장
 ```
