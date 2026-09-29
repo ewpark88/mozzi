@@ -81,6 +81,7 @@ Sep 26, 2026 · @ewpark
 
 - 땅에 닿지 않고 오브젝트를 연속으로 맞히면 콤보 배율이 ×1.1씩 쌓인다. 콤보 배율은 비행 중 먹은 씨앗(오브젝트 씨앗)에만 적용하고, 거리로 받는 씨앗은 별도로 계산한다. 착지하면 초기화된다.
 - 착지 후 미끄러짐 → 정지 → 결과 화면. 결과 화면에는 거리, 최고 기록 대비 변화, 획득 씨앗, 씨앗 2배 광고 버튼이 나온다.
+- 한 판 씨앗 = 거리 씨앗(거리 × 0.5 × 볼주머니 배율) + 먹은 씨앗(콤보 배율 적용) × 볼주머니 배율. 광고 2배는 합계에 적용하고, 목표에 못 미쳐도 씨앗은 받는다.
 - 직전 최고 기록 지점에 고스트 깃발을 표시해서 매판 목표를 보여준다.
 
 ## 3. 캐릭터
@@ -199,7 +200,11 @@ Sep 26, 2026 · @ewpark
 
 ### 보스 스테이지 상세
 
-보스는 목표 거리에 **추가 규칙 하나**를 더한다. 실패해도 씨앗은 받고, 클리어 보상은 다음 월드의 해금 보상이다. 같은 보스를 3판 연속 실패하면 보스 난이도를 5%씩 낮춰 최대 15%까지 완화한다 (클리어하면 초기화).
+보스는 목표 거리에 **추가 규칙 하나**를 더한다. 실패해도 씨앗은 받고, 클리어 보상은 다음 월드의 해금 보상이다. 같은 보스를 연속 실패 3판마다 보스 난이도를 5%씩 낮춰 최대 15%까지 완화한다 (클리어하면 초기화). 보스 시간은 플레이어가 느끼는 실제 초 기준이고, 보스에게 지면 그 자리에서 판이 끝난다.
+
+- **1-5 고양이:** 발사 2초 뒤 출발해, 발사 후 6초에 500m 골에 닿는 속도로 달린다. 완화하면 이 시간이 늘어난다.
+- **3-5 까마귀 대장:** 훔친 씨앗 게이지는 비행 중 초당 1.9%, 까마귀에 부딪힐 때마다 10% 오른다. 완화하면 오르는 양이 줄어든다.
+- **2-5 비둘기 대장:** 아래 상세. 코스의 분수는 2~3개를 고정 배치한다.
 
 | 보스 | 이름 | 추가 규칙 | 클리어 조건 | 실패 조건 | 클리어 보상 |
 | --- | --- | --- | --- | --- | --- |
@@ -215,10 +220,10 @@ Sep 26, 2026 · @ewpark
 - **진행:** 모찌를 발사하는 순간 대장이 출발해 일정한 속도로 골까지 난다. 화면 상단에 0\~2,000m 진행 바를 두고 모찌와 대장의 위치를 아이콘으로 표시한다. 대장이 화면 밖에 있으면 화면 가장자리에 방향 표시를 띄운다.
 - **코스:** 보통 공원 스테이지보다 비둘기(올라타면 가속)를 1.5배, 분수를 2\~3개 배치한다. 나뭇가지 장애물 비율은 공원 최대치(10%)를 쓴다. 비둘기와 분수를 얼마나 이어 타느냐가 승부처다.
 - **대장 속도:** 골까지 걸리는 시간 T로 정한다. 기준은 "2-4를 클리어한 업그레이드 수준에서 PERFECT 발사 + 비둘기 2회 탑승 시 모찌의 2,000m 도달 시간 × 1.05"다. 초기값 16초로 두고 플레이테스트로 확정한다.
-- **완화:** 3판 연속 실패하면 T를 5%씩 늘린다 (최대 +15%).
+- **완화:** 연속 실패 3판마다 T를 5%씩 늘린다 (최대 +15%).
 - **결과 연출:** 승리 시 대장이 왕관을 모찌에게 넘겨주고(모자 슬롯 해금 연출로 연결), 패배 시 대장이 골 위에서 우쭐대고 "다시 도전" 버튼이 나온다.
 - **별:** ★ 대장보다 먼저 골인 / ★★ 목표의 130%(2,600m) 도달 / ★★★ 대장보다 3초 이상 먼저 골인
-- **Remote Config:** `boss_2_5_rival_time_sec`(16), `boss_2_5_pigeon_mult`(1.5), `boss_fail_ease_step`(0.05), `boss_fail_ease_max`(0.15)
+- **Remote Config:** `boss_2_5_rival_time_sec`(16), `boss_2_5_pigeon_mult`(1.5), `boss_2_5_fountain_min`(2), `boss_2_5_fountain_max`(3), `boss_fail_ease_step`(0.05), `boss_fail_ease_max`(0.15)
 - **도감:** 클리어하면 비둘기 대장이 도감에 등록된다.
 
 ### 스테이지별 ★★★ 미션
@@ -536,7 +541,7 @@ Flutter + Flame으로 만들고, 모든 밸런스 값은 Firebase Remote Config�
 - 게이지 판정: `gauge_zone_width`(PERFECT, 0.1), `gauge_great_off`(0.3), `gauge_good_off`(0.6), `gauge_perfect_mult`(1.15), `gauge_great_mult_min`(1.03), `gauge_great_mult_max`(1.13), `gauge_good_mult_min`(0.95), `gauge_good_mult_max`(1.03), `gauge_miss_mult_min`(0.80), `gauge_miss_mult_max`(0.95)
 - 비행 조작 (14개): `boost_fuel_sec`(1.5), `boost_tap_sec`(0.3), `boost_lv0_fuel_sec`(0), `boost_cut_on_land`(true), `inflate_glide_ratio`(0.35), `inflate_decel_per_sec`(0.25), `dive_speed_ratio`(1.2), `dive_bounce_mult`(1.5), `dive_perfect_window_sec`(0.35), `dive_perfect_mult`(1.2), `gesture_tap_max_sec`(0.18), `gesture_hold_sec`(0.18), `gesture_swipe_min_px`(40), `gesture_swipe_max_sec`(0.35)
 - 스테이지: `stage_table`(JSON, 위 형식)
-- 보스: `boss_2_5_rival_time_sec`(16), `boss_2_5_pigeon_mult`(1.5), `boss_fail_ease_step`(0.05), `boss_fail_ease_max`(0.15)
+- 보스: `boss_1_5_cat_delay_sec`(2), `boss_1_5_cat_time_sec`(6), `boss_2_5_rival_time_sec`(16), `boss_2_5_pigeon_mult`(1.5), `boss_2_5_fountain_min`(2), `boss_2_5_fountain_max`(3), `boss_3_5_steal_per_sec`(0.019), `boss_3_5_crow_hit_meter`(0.1), `boss_fail_ease_step`(0.05), `boss_fail_ease_max`(0.15)
 - 광고: `ad_interstitial_every`, `ad_interstitial_grace_runs`, `ad_reward_multiplier`
 - 이벤트: `evt_golden_seed_rate`, `evt_chest_rate`, `evt_ufo_rate`, `liveops_active_event`
 - 상점: `shop_starterpack_trigger_min`
