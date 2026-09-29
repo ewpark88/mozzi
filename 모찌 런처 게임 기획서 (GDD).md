@@ -74,7 +74,7 @@ Sep 26, 2026 · @ewpark
 
 - **부스터:** 연료 1.5초, 탭 한 번에 0.3초 소모. 착지하면 분사가 즉시 꺼진다. 부스터 업그레이드 Lv0은 연료가 없다.
 - **볼 부풀리기:** 활공비 0.35, 부풀리는 동안 초당 25% 감속.
-- **급강하:** 속도 배율 1.2.
+- **급강하:** 속도 배율 1.2. 급강하 중 바운스 오브젝트에 맞으면 튀는 속도 ×1.5, 급강하를 시작하고 0.35초 안에 맞히면 퍼펙트로 ×1.2를 더 곱한다.
 - **제스처 판정:** 0.18초 이내에 손을 떼면 탭, 그 이상 누르고 있으면 홀드. 아래로 40px 이상을 0.35초 이내에 움직이면 스와이프.
 
 ### 콤보와 착지
@@ -284,7 +284,8 @@ Sep 26, 2026 · @ewpark
 {
   "stages": [
     {"id": "3-3", "world": 3, "goal": 3800, "boss": false,
-     "star3": [{"type": "hit", "obj": "billboard", "n": 1}, {"type": "seeds_min", "n": 40}]}
+     "star3": [{"type": "hit", "obj": "billboard", "n": 1}, {"type": "seeds_min", "n": 40}],
+     "star3_text": "광고판 충돌 1회 + 씨앗 40개"}
   ]
 }
 ```
@@ -314,7 +315,7 @@ Sep 26, 2026 · @ewpark
 | 트램폴린 | 튀길 때 속도 ×1.08, 최소 11 m/s |
 | 풍선 | 맞으면 위쪽 속도 12.1 m/s 이상으로 튀어 오름 |
 | 장애물 (나뭇가지, 전선, 번개구름, 운석) | 부딪히면 속도 15\~20% 감속 |
-| 까마귀 | 부딪히면 씨앗 3개 강탈 |
+| 까마귀 | 부딪히면 속도 15% 감속 + 씨앗 3개 강탈 |
 | 광고판 | 부딪히면 씨앗 +8개 |
 | 빨간 우산 | 3초 활공 |
 | 배치 간격 | max(5m, 현재 거리 × 0.08) |
@@ -533,7 +534,7 @@ Flutter + Flame으로 만들고, 모든 밸런스 값은 Firebase Remote Config�
 - 당기기: `pull_max_px`, `pull_min_power`, `launch_angle_max_deg`
 - 게이지 속도: `gauge_max_power`(1.1), `gauge_speed_base`(0.45), `gauge_speed_k`(1.35), `gauge_over_k`(9), `gauge_speed_exponent`
 - 게이지 판정: `gauge_zone_width`(PERFECT, 0.1), `gauge_great_off`(0.3), `gauge_good_off`(0.6), `gauge_perfect_mult`(1.15), `gauge_great_mult_min`(1.03), `gauge_great_mult_max`(1.13), `gauge_good_mult_min`(0.95), `gauge_good_mult_max`(1.03), `gauge_miss_mult_min`(0.80), `gauge_miss_mult_max`(0.95)
-- 비행 조작 (11개): `boost_fuel_sec`(1.5), `boost_tap_sec`(0.3), `boost_lv0_fuel_sec`(0), `boost_cut_on_land`(true), `inflate_glide_ratio`(0.35), `inflate_decel_per_sec`(0.25), `dive_speed_ratio`(1.2), `gesture_tap_max_sec`(0.18), `gesture_hold_sec`(0.18), `gesture_swipe_min_px`(40), `gesture_swipe_max_sec`(0.35)
+- 비행 조작 (14개): `boost_fuel_sec`(1.5), `boost_tap_sec`(0.3), `boost_lv0_fuel_sec`(0), `boost_cut_on_land`(true), `inflate_glide_ratio`(0.35), `inflate_decel_per_sec`(0.25), `dive_speed_ratio`(1.2), `dive_bounce_mult`(1.5), `dive_perfect_window_sec`(0.35), `dive_perfect_mult`(1.2), `gesture_tap_max_sec`(0.18), `gesture_hold_sec`(0.18), `gesture_swipe_min_px`(40), `gesture_swipe_max_sec`(0.35)
 - 스테이지: `stage_table`(JSON, 위 형식)
 - 보스: `boss_2_5_rival_time_sec`(16), `boss_2_5_pigeon_mult`(1.5), `boss_fail_ease_step`(0.05), `boss_fail_ease_max`(0.15)
 - 광고: `ad_interstitial_every`, `ad_interstitial_grace_runs`, `ad_reward_multiplier`
